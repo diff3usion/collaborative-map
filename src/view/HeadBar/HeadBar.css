@@ -1,0 +1,56 @@
+
+.headbar {
+    top: 0;
+    background-color: SteelBlue;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: var(--head-bar-height);
+    position: fixed;
+    z-index: 1;
+}
+
+.headbar-logo {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: var(--head-bar-height);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    color: white;
+    opacity: .80;
+}
+
+.headbar-name {
+    flex-grow: 1;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    color: white;
+    white-space: nowrap;
+}
+
+.headbar-user, .headbar-login{
+    width: 256px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    white-space: nowrap;
+}
+
+.headbar-user-bell {
+    margin-right: 10px;
+    font-size: x-large;
+}
+
+.headbar-user-avatar {
+    margin-right: 10px;
+}
+
+.headbar-login a {
+    color: white;
+}

@@ -1,0 +1,52 @@
+@import '../MainPanel.css';
+
+.bottom-sub-control, .bottom-sub-control * {
+    transition: 200ms cubic-bezier(0.8, 0, 0.2, 1);
+}
+
+.bottom-sub-control {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    bottom: var(--bottom-margin);
+    height: var(--bottom-sub-control-height);
+    background-color: rgba(224, 224, 224);
+    border-radius: 2px;
+    border-bottom: var(--bottom-border);
+    border-bottom-style: solid;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    transform: translateY(0px);
+    cursor: default;
+}
+
+.bottom-sub-control-enter {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.bottom-sub-control-enter-active {
+    opacity: 0.5;
+    transform: translateY(0px);
+    transition: 200ms;
+}
+
+.bottom-sub-control-enter-done {
+    opacity: 0.5;
+    transform: translateY(0px);
+}
+
+.bottom-sub-control-enter-done:hover  {
+    opacity: 1;
+}
+
+.bottom-sub-control-exit {
+    opacity: 0.5;
+    transform: translateY(0px);
+}
+
+.bottom-sub-control-exit-active {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: 200ms;
+}

@@ -1,0 +1,9 @@
+#side-panel {
+    display: inline-block;
+    width: 30%;
+    height: 100%;
+    right: -30%;
+    background-color: Snow;
+    position: absolute;
+    vertical-align: top;
+}

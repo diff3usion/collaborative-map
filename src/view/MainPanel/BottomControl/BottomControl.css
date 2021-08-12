@@ -1,0 +1,23 @@
+@import '../MainPanel.css';
+
+#bottom-control, #bottom-control * {
+    transition: 200ms cubic-bezier(0.8, 0, 0.2, 1);
+}
+
+#bottom-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    position: absolute;
+    bottom: var(--bottom-margin);
+    left: calc(50% - var(--bottom-control-width) / 2);
+    background-color: rgba(224, 224, 224, 0.6);
+    width: var(--bottom-control-width);
+    height: var(--bottom-control-height);
+    border-bottom: var(--bottom-border);
+    border-radius: 2px;
+    border-bottom-style: solid;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    cursor: default;
+}

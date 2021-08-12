@@ -1,0 +1,29 @@
+#root {
+    height: 100%;
+}
+
+.app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-flow: column;
+}
+
+.app-body {
+    flex-grow: 1;
+    display: flex;
+    flex-flow: row;
+}
+
+.app-content {
+    margin-top: 64px;
+    margin-left: 200px;
+    flex-grow: 1;
+    display: flex;
+}
+
+.ant-layout {
+    margin-top: var(--head-bar-height);
+    height: calc(100vh - var(--head-bar-height));
+    width: 100%;
+}

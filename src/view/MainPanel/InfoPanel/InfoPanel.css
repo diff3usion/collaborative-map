@@ -1,0 +1,10 @@
+#info-panel {
+    position: absolute;
+    top: 48px;
+    left: 48px;
+    background-color: snow;
+    opacity: 0.9;
+    width: 240px;
+    height: 388px;
+    border-radius: 24px;
+}

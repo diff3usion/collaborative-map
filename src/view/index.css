@@ -1,0 +1,10 @@
+:root {
+    --bottom-border: 3px;
+    --bottom-margin: 48px;
+    --bottom-control-width: 288px;
+    --bottom-control-height: 96px;
+    --bottom-sub-control-height: 60px;
+    --theme-color-explore: #4682B4;
+    --theme-color-marking: #EC7063;
+    --theme-color-uploads: #03C03C;
+}

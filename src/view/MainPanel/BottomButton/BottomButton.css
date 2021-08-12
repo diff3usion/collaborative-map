@@ -1,0 +1,13 @@
+.bottom-button {
+    display: flex;
+    border-radius: 2px;
+    justify-content: center;
+    user-select: none;
+    cursor: pointer;
+}
+
+.bottom-button-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
