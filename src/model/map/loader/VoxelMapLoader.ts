@@ -269,27 +269,26 @@ const parseRegionZipFileName: (file: File) => VoxelRegionIndex
 const isZipFile: (file: File) => boolean
     = file => file.name.split('.').pop() === "zip"
 
-const VoxelMapRegion$
-    = VoxelRegionZipFiles$
-        .pipe(
-            mergeMap(fileList =>
-                from(fileList).pipe(
-                    filter(isZipFile),
-                    mergeMap(zipFile =>
-                        forkJoin([
-                            loadRegionZipFile(zipFile),
-                            of(parseRegionZipFileName(zipFile))
-                        ])
-                    )
+const VoxelMapRegion$ = VoxelRegionZipFiles$
+    .pipe(
+        mergeMap(fileList =>
+            from(fileList).pipe(
+                filter(isZipFile),
+                mergeMap(zipFile =>
+                    forkJoin([
+                        loadRegionZipFile(zipFile),
+                        of(parseRegionZipFileName(zipFile))
+                    ])
                 )
-            ),
-            map(regionZipFileLoadedEventToBlob),
-            mergeMap(blob =>
-                from(regionZipBlobToCache(blob))
-            ),
-            // map(cacheToMapRegion),
-            map(cacheToRegion),
-            map(regionToMapRegion),
-        )
+            )
+        ),
+        map(regionZipFileLoadedEventToBlob),
+        mergeMap(blob =>
+            from(regionZipBlobToCache(blob))
+        ),
+        // map(cacheToMapRegion),
+        map(cacheToRegion),
+        map(regionToMapRegion),
+    )
 
 regionProvider$.next(VoxelMapRegion$)

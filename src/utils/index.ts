@@ -177,3 +177,9 @@ export const mapPartition: <K, V>(map: Map<K, V>, predicate: (k: K, v: V) => boo
 
 export const boundedNumber = (lower: number, upper: number, n: number) => Math.max(lower, Math.min(upper, n))
 
+
+export const stringToArray = (s: string) => {
+    const res = new Uint8Array(new ArrayBuffer(s.length * 1))
+    res.forEach((_, i) => res[i] = s.charCodeAt(i))
+    return res
+}

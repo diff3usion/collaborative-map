@@ -1,10 +1,10 @@
-import { map, filter, pairwise, window, withLatestFrom, switchMap } from "rxjs"
+import { map, filter, pairwise, window, withLatestFrom, switchMap, distinctUntilChanged } from "rxjs"
 import { canvasWheel$, rendererPointerDown$, rendererPointerMove$ } from "../intent/Map"
 import { MapControlMode } from "../model/map/Type"
 import { rendererPointerIsDown$, rendererCursorStyle$, cursorRelativePosition$, viewport$, scale$, viewportUpdateObserver, filterPointerIsDown, mapToRelativePosition } from "../store/Map"
 import { filterControlMode } from "../store/MapControl"
 import { PlaneVector, EventButtonType, Viewport, ViewportUpdate } from "../Type"
-import { mouseEventToPlaneVector } from "../utils"
+import { boundedNumber, mouseEventToPlaneVector } from "../utils"
 import { distinctPlaneVector, distinctViewport, mapToEventGlobalPosition } from "../utils/rx"
 
 const maxScale = 64
@@ -39,7 +39,7 @@ const panAction$ = rendererPointerMove$
     )
 
 const newScale = (oldScale: number, isZoomIn: boolean) =>
-    oldScale * (1 + (isZoomIn ? 1 : -1) * mapCanvasScaleRate)
+    boundedNumber(minScale, maxScale, oldScale * (1 + (isZoomIn ? 1 : -1) * mapCanvasScaleRate))
 
 const recenteredPosition: (scale: number, scaleCenter: PlaneVector, viewport: Viewport) => PlaneVector
     = (scale, [mouseX, mouseY], { position: [posX, posY], scale: oldScale }) => [
@@ -52,7 +52,7 @@ const zoomAction$ = canvasWheel$.pipe(
     map(event => <const>[event.deltaY > 0, mouseEventToPlaneVector(event)]),
     withLatestFrom(scale$),
     map(([[isZoomIn, mousePos], oldScale]) => <const>[newScale(oldScale, isZoomIn), mousePos]),
-    filter(([scale]) => scale >= minScale && scale <= maxScale),
+    distinctUntilChanged(),
     withLatestFrom(viewport$),
     map(([[scale, scaleCenter], viewport]) => initViewport(recenteredPosition(scale, scaleCenter, viewport), scale)),
 )
