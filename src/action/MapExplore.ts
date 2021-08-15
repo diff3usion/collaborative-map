@@ -17,10 +17,10 @@ const initViewport: (position: PlaneVector, scale: number) => Viewport
 const initViewportUpdate: (viewport: Viewport, animated: boolean) => ViewportUpdate
     = (viewport, animated) => ({ viewport, animated })
 
-const startPanEvent$ = rendererPointerDown$
+const startPanEvent$ = rendererPointerIsDown$
     .pipe(
+        filter(type => type === EventButtonType.Main),
         filterControlMode(MapControlMode.Explore),
-        filterPointerIsDown(EventButtonType.Main),
     )
 
 const panAction$ = rendererPointerMove$
