@@ -1,10 +1,11 @@
-import { map, filter, pairwise, window, withLatestFrom, switchMap, distinctUntilChanged, tap } from "rxjs"
-import { canvasWheel$, rendererPointerDown$, rendererPointerMove$ } from "../intent/Map"
-import { rendererPointerIsDown$, rendererCursorStyle$, cursorRelativePosition$, viewport$, scale$, viewportUpdateObserver, filterPointerIsDown, mapToRelativePosition } from "../store/Map"
+import { map, pairwise, window, withLatestFrom, switchMap, tap } from "rxjs"
+import { canvasWheel$ } from "../intent/Map"
+import { rendererPointerIsDown$, rendererCursorStyle$, viewport$, scale$, viewportUpdateObserver } from "../store/Map"
 import { filterControlMode } from "../store/MapControl"
-import { PlaneVector, EventButtonType, Viewport, ViewportUpdate, MapControlMode } from "../Type"
-import { boundedNumber, mouseEventToPlaneVector } from "../utils"
-import { distinctPlaneVector, distinctViewport, mapToEventGlobalPosition } from "../utils/rx"
+import { PlaneVector, Viewport, ViewportUpdate, MapControlMode } from "../Type"
+import { boundedNumber, eventToGlobalPosition, mouseEventToPlaneVector } from "../utils"
+import { distinctPlaneVector, distinctViewport } from "../utils/rx"
+import { mainButtonDown$, mainButtonDownAndMove$ } from "./Pointer"
 
 const maxScale = 64
 const minScale = 1 / 8
@@ -13,48 +14,50 @@ const mapCanvasScaleRate = 0.5
 const initViewport: (position: PlaneVector, scale: number) => Viewport
     = (position, scale) => ({ position, scale })
 
-const initViewportUpdate: (viewport: Viewport, animated: boolean) => ViewportUpdate
-    = (viewport, animated) => ({ viewport, animated })
-
-const startPanEvent$ = rendererPointerIsDown$
-    .pipe(
-        filter(type => type === EventButtonType.Main),
-        filterControlMode(MapControlMode.Explore),
-    )
-
-const panAction$ = rendererPointerMove$
+//#region Pan Action
+const panAction$ = mainButtonDownAndMove$
     .pipe(
         filterControlMode(MapControlMode.Explore),
-        filterPointerIsDown(EventButtonType.Main),
-        mapToEventGlobalPosition(),
+        map(eventToGlobalPosition),
         distinctPlaneVector(),
-        window(startPanEvent$),
+        window(mainButtonDown$),
         switchMap(ob => ob.pipe(
             pairwise(),
             map(([[prevX, prevY], [moveX, moveY]]) => ([moveX - prevX, moveY - prevY] as PlaneVector)),
             withLatestFrom(viewport$),
             map(([[deltaX, deltaY], { position: [x, y], scale }]) => initViewport([x + deltaX, y + deltaY], scale)),
         )),
+        distinctViewport(),
     )
+//#endregion
 
-const newScale = (oldScale: number, isZoomIn: boolean) =>
-    boundedNumber(minScale, maxScale, oldScale * (1 + (isZoomIn ? 1 : -1) * mapCanvasScaleRate))
+//#region Zoom Action
+type ScaleAndCenter = [number, PlaneVector]
+const newScale: (oldScale: number, isZoomIn: boolean, center: PlaneVector) => ScaleAndCenter
+    = (oldScale, isZoomIn, center) =>
+        [boundedNumber(minScale, maxScale, oldScale * (1 + (isZoomIn ? 1 : -1) * mapCanvasScaleRate)), center]
 
-const recenteredPosition: (scale: number, scaleCenter: PlaneVector, viewport: Viewport) => PlaneVector
-    = (scale, [mouseX, mouseY], { position: [posX, posY], scale: oldScale }) => [
-        mouseX - (mouseX - posX) * scale / oldScale,
-        mouseY - (mouseY - posY) * scale / oldScale,
-    ]
+const scaledAndRecentered: (viewport: Viewport, scale: number, scaleCenter: PlaneVector) => Viewport
+    = ({ position: [posX, posY], scale: oldScale }, newScale, [centerX, centerY]) =>
+        initViewport([
+            centerX - (centerX - posX) * newScale / oldScale,
+            centerY - (centerY - posY) * newScale / oldScale,
+        ], newScale)
 
 const zoomAction$ = canvasWheel$.pipe(
     filterControlMode(MapControlMode.Explore),
     map(event => <const>[event.deltaY > 0, mouseEventToPlaneVector(event)]),
     withLatestFrom(scale$),
-    map(([[isZoomIn, mousePos], oldScale]) => <const>[newScale(oldScale, isZoomIn), mousePos]),
-    distinctUntilChanged(),
+    map(([[isZoomIn, mousePos], oldScale]) => newScale(oldScale, isZoomIn, mousePos)),
     withLatestFrom(viewport$),
-    map(([[scale, scaleCenter], viewport]) => initViewport(recenteredPosition(scale, scaleCenter, viewport), scale)),
+    map(([[scale, scaleCenter], viewport]) => scaledAndRecentered(viewport, scale, scaleCenter)),
+    distinctViewport(),
 )
+//#endregion
+
+//#region Viewport Update
+const initViewportUpdate: (viewport: Viewport, animated: boolean) => ViewportUpdate
+    = (viewport, animated) => ({ viewport, animated })
 
 panAction$.pipe(
     distinctViewport(),
@@ -64,18 +67,12 @@ panAction$.pipe(
 zoomAction$.pipe(
     map(vp => initViewportUpdate(vp, true)),
 ).subscribe(viewportUpdateObserver)
+//#endregion
 
-rendererPointerMove$
-    .pipe(
-        mapToEventGlobalPosition(),
-        distinctPlaneVector(),
-        mapToRelativePosition(),
-    )
-    .subscribe(cursorRelativePosition$)
-
+//#region Grabbing Cursor Style
 rendererPointerIsDown$
     .pipe(
         filterControlMode(MapControlMode.Explore),
         map(downButton => downButton === 0 ? 'grabbing' : 'grab'))
     .subscribe(rendererCursorStyle$)
-
+//#endregion

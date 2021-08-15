@@ -1,14 +1,15 @@
-import { distinctUntilChanged, map, tap, window, withLatestFrom, startWith, of, switchMap, merge, mergeWith, share, scan, Observable } from "rxjs";
+import { distinctUntilChanged, map, tap, window, withLatestFrom, startWith, of, switchMap, merge, share, scan, Observable } from "rxjs";
 import { markingTypeDropdownKeyMap } from "../Constant";
 import { markingTypeControlSelectedOption$ } from "../intent/Control";
-import { rendererPointerDown$, rendererPointerMove$, rendererPointerUp$ } from "../intent/Map";
 import { placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
-import { filterPointerIsDown, mapToRelativePosition, scale$, viewport$ } from "../store/Map";
+import { mapToRelativePosition, viewport$ } from "../store/Map";
 import { filterControlMode } from "../store/MapControl";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints } from "../store/MapMarking";
 import { EventButtonType, MapControlMode, PlaneVector } from "../Type";
-import { planeVectorUnshift, vectorRound, vectorTimes } from "../utils/geometry";
-import { distinctPlaneVector,  filterEventButton, filterWithoutTarget, mapToEventGlobalPosition, mapToEventTargetRelativePosition, switchToLastestFrom } from "../utils/rx";
+import { eventToGlobalPosition, eventToTargetRelativePosition } from "../utils";
+import { planeVectorUnshift, vectorRound } from "../utils/geometry";
+import { distinctPlaneVector, filterEventButton, switchToLastestFrom } from "../utils/rx";
+import { mainButtonDownOnBackground$, mainButtonDownAndMove$, mainButtonUpOnBackground$ } from "./Pointer";
 
 markingTypeControlSelectedOption$
     .pipe(
@@ -17,24 +18,27 @@ markingTypeControlSelectedOption$
     )
     .subscribe(markingMode$)
 
-const newTempPointEvent$ = rendererPointerDown$
-    .pipe(
-        filterWithoutTarget(),
-        filterEventButton(EventButtonType.Main),
-        mergeWith(rendererPointerMove$.pipe(filterPointerIsDown(EventButtonType.Main))),
+//#region New Temp Point
+const newTempPointEvent$ =
+    merge(
+        mainButtonDownOnBackground$,
+        mainButtonDownAndMove$,
+    ).pipe(
         filterControlMode(MapControlMode.Marking),
         filterCanPlaceMorePoints(),
     )
+
 newTempPointEvent$
     .pipe(
-        mapToEventGlobalPosition(),
-        distinctPlaneVector(),
+        map(eventToGlobalPosition),
         mapToRelativePosition(),
         map(vectorRound),
         distinctPlaneVector(),
     )
     .subscribe(tempPoint$)
+//#endregion
 
+//#region Add / Delete Placed Points
 type MarkingAction = [PlaneVector, MarkingActionType]
 enum MarkingActionType {
     Clear,
@@ -57,17 +61,21 @@ const applyMarkingAction: (vectors: PlaneVector[], current: MarkingAction) => Pl
         }
     }
 
-const addPlacedPointEvent$ = rendererPointerUp$
+const mainButtonUpTempPoint$ = tempPointPointerUp$
     .pipe(
-        filterWithoutTarget(),
-        mergeWith(tempPointPointerUp$),
-        filterControlMode(MapControlMode.Marking),
         filterEventButton(EventButtonType.Main),
+    )
+const addPlacedPointEvent$ =
+    merge(
+        mainButtonUpOnBackground$,
+        mainButtonUpTempPoint$,
+    ).pipe(
+        filterControlMode(MapControlMode.Marking),
         filterCanPlaceMorePoints(),
         switchToLastestFrom(newTempPointEvent$),
     )
 const addAction$ = addPlacedPointEvent$.pipe(
-    mapToEventGlobalPosition(),
+    map(eventToGlobalPosition),
     mapToRelativePosition(),
     map(vectorRound),
     window(markingMode$),
@@ -80,7 +88,7 @@ const deletePlacedPointEvent$ = placedPointPointerUp$
     )
 const deleteAction$ = deletePlacedPointEvent$
     .pipe(
-        mapToEventTargetRelativePosition(),
+        map(eventToTargetRelativePosition),
         withLatestFrom(viewport$),
         map(([targetPos, viewport]) => vectorRound(planeVectorUnshift(targetPos, viewport))),
         withLatestFrom(of(MarkingActionType.Delete)),
@@ -93,3 +101,4 @@ merge(
 ).pipe(
     scan(applyMarkingAction, []),
 ).subscribe(placedPoints$)
+//#endregion

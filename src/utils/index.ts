@@ -1,5 +1,5 @@
-import _ from "lodash";
-import { Point } from "pixi.js";
+import _, { map } from "lodash";
+import { InteractionEvent, Point } from "pixi.js";
 import { isFirefox } from 'react-device-detect';
 import { PlaneVector, Viewport } from "../Type";
 
@@ -144,6 +144,12 @@ export const mouseEventToPlaneVector: (event: MouseEvent) => PlaneVector
             return [e.offsetX, e.offsetY]
         }
     }
+
+export const eventToGlobalPosition: (e: InteractionEvent) => PlaneVector
+    = ({ data: { global: { x, y } } }) => [x, y]
+
+export const eventToTargetRelativePosition: (e: InteractionEvent) => PlaneVector
+    = ({ currentTarget: { position: { x, y } } }) => [x, y]
 
 export const globalToRelativePosition: (globalPosition: PlaneVector, viewport: Viewport) => PlaneVector
     = ([globalX, globalY], { position: [posX, posY], scale }) =>

@@ -3,6 +3,7 @@ import { bottomControlExploreClick$, bottomControlMarkingClick$, bottomControlUp
 import { controlMode$ } from "../store/MapControl"
 import { MapControlMode } from "../Type"
 
+//#region Switching Control Mode
 merge(
     controlMode$,
     bottomControlExploreClick$.pipe(
@@ -25,4 +26,4 @@ merge(
 ).pipe(
     distinctUntilChanged(),
 ).subscribe(controlMode$)
-
+//#endregion
