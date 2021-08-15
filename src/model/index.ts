@@ -5,26 +5,31 @@ import { PlaneSize, PlaneVector } from "../Type";
 import { bytesToNumber, imageDataToBase64Url, initArray } from "../utils";
 import { getBlockMeta, getLocationMeta, getBlockState, regionsOfRect, loadVoxelMapCacheFile, renderLoadedRegion, getRegionTime, getRegionRect, loadMcMapColorTable } from "model";
 
-export interface BlockState {
-    namespace: string
-    id: string
-    args?: { [key: string]: string }
-}
+export class BlockState {
+    constructor(
+        readonly namespace: string,
+        readonly id: string,
+        readonly args: { [key: string]: string },
+    ) { }
 
-const blockStateStringFormat = /(\w+)\:(\w+)(?:\[(.+)\])*/
-const parseBlockState: (stringified: string) => BlockState | undefined
-    = s => {
-        const capture = blockStateStringFormat.exec(s)
-        if (!capture || (capture.length !== 4 && capture.length !== 5))
-            return undefined
-        const namespace = capture[1]
-        const id = capture[2]
-        const args = {} as { [key: string]: string }
-        capture[3] ? capture[3].split(',')
-            .map(arg => arg.split('=') as [string, string])
-            .forEach(argPair => args[argPair[0]] = argPair[1]) : undefined
-        return { namespace, id, args }
+    get stringified() {
+        return `${this.namespace}:${this.id}${Object.keys(this.args).length ? `[${Object.entries(this.args).map(([k, v]) => `${k}=${v}`).join(',')}]` : ''}`
     }
+
+    private static stringFormat = /(\w+)\:(\w+)(?:\[(.+)\])*/
+    static parse: (stringified: string) => BlockState | undefined
+        = s => {
+            const capture = BlockState.stringFormat.exec(s)
+            if (!capture || (capture.length !== 4 && capture.length !== 5))
+                return undefined
+            const namespace = capture[1]
+            const id = capture[2]
+            const args: { [key: string]: string } = Object.fromEntries(
+                capture[3].split(',').map(arg => arg.split('=') as [string, string])
+            )
+            return new BlockState(namespace, id, args)
+        }
+}
 
 export class MapBlock {
     constructor(
@@ -44,7 +49,7 @@ export class MapBlock {
         const key = bytesToNumber(meta, 0, 2)
         const stringified = getBlockState(key)
         if (!stringified) return undefined
-        return parseBlockState(stringified)
+        return BlockState.parse(stringified)
     }
     get height(): number | undefined {
         const meta = this.meta

@@ -18,11 +18,12 @@ export type ViewportUpdate = {
     animated: boolean
 }
 
-export type BlockState = {
-    namespace: string
-    id: string
-    args?: { [key: string]: string }
+export enum MapControlMode {
+    Explore,
+    Marking,
+    Uploads,
 }
+
 
 export enum MapMarkingMode {
     Point,

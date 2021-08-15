@@ -1,6 +1,6 @@
 import * as zip from "@zip.js/zip.js"
 import { concatMap, firstValueFrom, from, toArray } from "rxjs"
-import { BlockState } from "../../Type"
+import { BlockState } from ".."
 
 type BlockTextureMetaAnimation = {
     interpolate?: boolean

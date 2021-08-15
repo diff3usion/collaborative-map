@@ -3,7 +3,6 @@ import "./BottomSubControl.css"
 import { CSSProperties, forwardRef, ReactNode } from "react";
 import { useBehaviorSubjectAsState } from "../../../utils/hook";
 import { CssVariables } from "../../";
-import { MapControlMode } from "../../../model/Type";
 import { controlMode$ } from "../../../store/MapControl";
 
 export type BottomSubControlProps = {

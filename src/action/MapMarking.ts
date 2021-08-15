@@ -3,11 +3,10 @@ import { markingTypeDropdownKeyMap } from "../Constant";
 import { markingTypeControlSelectedOption$ } from "../intent/Control";
 import { rendererPointerDown$, rendererPointerMove$, rendererPointerUp$ } from "../intent/Map";
 import { placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
-import { MapControlMode } from "../model/Type";
 import { filterPointerIsDown, mapToRelativePosition, scale$, viewport$ } from "../store/Map";
 import { filterControlMode } from "../store/MapControl";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints } from "../store/MapMarking";
-import { EventButtonType, PlaneVector } from "../Type";
+import { EventButtonType, MapControlMode, PlaneVector } from "../Type";
 import { planeVectorUnshift, vectorRound, vectorTimes } from "../utils/geometry";
 import { distinctPlaneVector,  filterEventButton, filterWithoutTarget, mapToEventGlobalPosition, mapToEventTargetRelativePosition, switchToLastestFrom } from "../utils/rx";
 

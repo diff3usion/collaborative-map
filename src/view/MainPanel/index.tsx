@@ -10,9 +10,9 @@ import { InfoPanel } from "./InfoPanel";
 
 import "./MainPanel.css"
 import { MarkingTypeControl, markingTypeControlWidth } from "./MarkingSubControl";
-import { MapControlMode } from "../../model/Type";
 import { MapContainer } from "../MapContainer";
 import { controlMode$ } from "../../store/MapControl";
+import { MapControlMode } from "../../Type";
 
 const subControlMargin = 24
 

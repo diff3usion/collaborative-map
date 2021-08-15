@@ -2,10 +2,10 @@ import * as zip from "@zip.js/zip.js"
 import { of, from, forkJoin, map, mergeMap, Observable, filter } from "rxjs"
 
 import { initArray } from "../../../utils"
-import { BlockState } from "../../../Type"
 import { UnIndexedRegion, MapRegion, MapBlock, UnfoldedLocation, UnfoldedBlock } from "../Data"
 import { VoxelRegionZipFiles$ } from "../../../App"
 import { regionProvider$ } from ".."
+import { BlockState } from "../.."
 
 type VoxelLayer = {
     state: BlockState
@@ -91,7 +91,7 @@ const cacheToMapRegion: (indexedCache: VoxelMapCache) => UnIndexedRegion
                     capture[4] ? capture[4].split(',')
                         .map(arg => arg.split('=') as [string, string])
                         .forEach(argPair => args[argPair[0]] = argPair[1]) : undefined
-                    return [stateId, { namespace, id, args }]
+                    return [stateId, new BlockState(namespace, id, args)]
                 }))
 
         const decodeBlockData: (key: CacheKey, x: number, z: number, offset: number) => UnfoldedBlock
@@ -171,7 +171,7 @@ const cacheToRegion: (indexedCache: VoxelMapCache) => VoxelRegion
                     capture[4] ? capture[4].split(',')
                         .map(arg => arg.split('=') as [string, string])
                         .forEach(argPair => args[argPair[0]] = argPair[1]) : undefined
-                    return [stateId, { namespace, id, args }]
+                    return [stateId, new BlockState(namespace, id, args)]
                 }))
 
         const decodeLayerData: (key: CacheKey, data: Uint8Array) => VoxelLayer = (key, data) => ({

@@ -1,5 +1,4 @@
-import { MapControlMode } from "./model/Type"
-import { MapMarkingMode } from "./Type"
+import { MapControlMode, MapMarkingMode } from "./Type"
 import { TwoWayMap } from "./utils"
 
 export const markingTypeKeyHeader = 'marking_type'
