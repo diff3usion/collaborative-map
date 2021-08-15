@@ -36,7 +36,7 @@ export abstract class MarkerGraphics {
     protected move(from?: PlaneVector[]) {
         if (from) {
             if (this.moveTransition) {
-                this.moveTransition.revise(this.shiftedVectors, 10)
+                this.moveTransition.revise(this.shiftedVectors, transitionFrames)
             } else {
                 this.moveTransition = new Transition(
                     transitionFrames, from, this.shiftedVectors,

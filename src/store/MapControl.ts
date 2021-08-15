@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, withLatestFrom, filter, map } from "rxjs"
-import { MapControlMode } from "../model/map/Type"
+import { MapControlMode } from "../model/Type"
 
 export const controlMode$ = new BehaviorSubject<MapControlMode>(MapControlMode.Explore)
 

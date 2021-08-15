@@ -82,7 +82,7 @@ class GridLine {
     private move(from?: PlaneVector) {
         if (from) {
             if (this.moveTransition) {
-                this.moveTransition.revise(this.start, 10)
+                this.moveTransition.revise(this.start, transitionFrames)
             } else {
                 this.moveTransition = new Transition(
                     transitionFrames, from, this.start,

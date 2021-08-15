@@ -48,8 +48,8 @@ impl BlockState {
             .collect();
         format!(
             "{}:{}[{}]",
-            self.block.id,
             self.block.namespace,
+            self.block.id,
             a.join(",")
         )
     }
@@ -86,8 +86,8 @@ pub struct BlockEntry {
 }
 
 impl BlockEntry {
-    pub fn encode(&self) -> [u8; 5] {
-        let mut res = [0; 5];
+    pub fn encode(&self) -> Vec<u8> {
+        let mut res = vec![0; 5];
         res[0] = self.state_key as u8;
         res[1] = (self.state_key >> 8) as u8;
         res[2] = self.height as u8;
@@ -105,8 +105,8 @@ pub struct LocationEntry {
 }
 
 impl LocationEntry {
-    pub fn encode(&self) -> [u8; 4] {
-        let mut res = [0; 4];
+    pub fn encode(&self) -> Vec<u8> {
+        let mut res = vec![0; 4];
         res[0] = self.size as u8;
         res[1] = (self.size >> 8) as u8;
         res[2] = self.biome_id as u8;
@@ -115,24 +115,15 @@ impl LocationEntry {
     }
 }
 
-impl Default for LocationEntry {
-    fn default() -> LocationEntry {
-        LocationEntry {
-            size: 0,
-            offset: 0,
-            biome_id: 0,
-        }
-    }
-}
-
+use super::utils::*;
 #[derive(Debug)]
 pub struct MapRegion {
     pub id: u16,
-    pub position: (i32, i32),
-    pub size: (usize, usize),
+    pub position: PlaneVector,
+    pub size: PlaneSize,
+    pub modify_time: u64,
     pub location_entries: Vec<LocationEntry>,
     pub block_entries: Vec<BlockEntry>,
-    pub modify_time: u64,
 }
 
 impl MapRegion {
@@ -194,6 +185,7 @@ impl MapRegionIdStore {
     pub fn add(&mut self, mr: MapRegion) -> u16 {
         let mut region = mr;
         let res = self.id_count;
+        self.id_count += 1;
         region.id = res;
         self.id_map.insert(region.id, region);
         res
@@ -201,6 +193,9 @@ impl MapRegionIdStore {
     #[allow(dead_code)]
     pub fn get(&self, id: u16) -> Option<&MapRegion> {
         self.id_map.get(&id)
+    }
+    pub fn iter(&self) -> std::collections::hash_map::Iter<u16, MapRegion> {
+        self.id_map.iter()
     }
 }
 

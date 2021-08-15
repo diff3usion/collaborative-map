@@ -14,9 +14,9 @@ export const InfoPanel = () => {
     const location = () => {
         if (!mapCursorLocation) return undefined
         return (<div>
-            <div>biome {biomeIdToName.get(mapCursorLocation.biomeId)}</div>
+            <div>biome {biomeIdToName.get(mapCursorLocation.biomeId!)}</div>
             {
-                mapCursorLocation.blocks.map(b => <div>{b.height} {b.state.id}</div>)
+                mapCursorLocation.blocks.map(b => <div>{b.height} {b.state?.id}</div>)
             }
         </div>)
     }

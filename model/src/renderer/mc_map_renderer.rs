@@ -66,7 +66,7 @@ pub fn render_map_region(region: &MapRegion) -> Vec<u8> {
                     } else {
                         (color[i] as f32 * multiplier).floor() as u8
                     };
-                    res[x * x_len * 4 + z * 4 + i] = color;
+                    res[z * z_len * 4 + x * 4 + i] = color;
                 }
             }
         }

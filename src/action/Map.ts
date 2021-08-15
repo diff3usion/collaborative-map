@@ -1,6 +1,6 @@
 import { map, merge, mapTo } from "rxjs"
 import { rendererPointerDown$, rendererPointerMove$, rendererPointerUp$, rendererPointerUpOutside$ } from "../intent/Map"
-import { locationOfPosition } from "../model/map"
+import { locationOfPosition } from "../model/"
 import { controlModeCursorStyles } from "../Constant"
 import { distinctPlaneVector, filterWithoutTarget, mapToEventGlobalPosition } from "../utils/rx"
 import { cursorLocation$ } from "../store/MapData"

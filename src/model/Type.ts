@@ -1,4 +1,4 @@
-import { PlaneVector } from "../../Type"
+import { PlaneVector } from "../Type"
 
 export enum MapControlMode {
     Explore,

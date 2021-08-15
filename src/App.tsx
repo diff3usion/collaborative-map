@@ -41,6 +41,6 @@ const App = () => {
 export const TexturePackZipFile$ = new Subject<File>()
 export const VoxelRegionZipFiles$ = new Subject<FileList>()
 
-import("./model/map")
+// import("./model/map")
 
 export default App

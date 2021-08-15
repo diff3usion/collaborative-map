@@ -33,15 +33,17 @@ fn read_key_block_state(text: &str) -> BlockState {
         Regex::new(r"Block\{(?P<namespace>\w+):(?P<id>\w+)\}(\[(?P<args>.+)\])*").unwrap()
     });
     let cap = RE.captures(text).unwrap();
+    let namespace = String::from(
+        cap.name("namespace")
+            .map(|namespace| namespace.as_str())
+            .unwrap(),
+    );
+    let mut id = String::from(cap.name("id").map(|id| id.as_str()).unwrap());
+    if id == "grass_path" {
+        id = "dirt_path".to_owned();
+    }
     BlockState {
-        block: NamespacedId {
-            namespace: String::from(
-                cap.name("namespace")
-                    .map(|namespace| namespace.as_str())
-                    .unwrap(),
-            ),
-            id: String::from(cap.name("id").map(|id| id.as_str()).unwrap()),
-        },
+        block: NamespacedId { namespace, id },
         args: match cap.name("args").map(|id| id.as_str()) {
             Some(args) => read_key_block_state_args(args),
             None => HashMap::new(),
@@ -130,12 +132,13 @@ fn decode_voxel_map_cache(
             offset: blocks.len() as u32,
             biome_id: ((data(16) as u16) << 8) + data(17) as u16,
         };
-        let new_blocks = vec![
-            decode_layer(&data, 4, &remapped_key),
+        let mut new_blocks = vec![
             decode_layer(&data, 0, &remapped_key),
+            decode_layer(&data, 4, &remapped_key),
             decode_layer(&data, 8, &remapped_key),
             decode_layer(&data, 12, &remapped_key),
         ];
+        new_blocks.sort_by(|a, b| a.height.cmp(&b.height));
         for b in new_blocks {
             blocks.push(b);
         }
@@ -170,8 +173,8 @@ fn position_from_filename(filename: &str) -> (i32, i32) {
     let name = filename.split_at(filename.find(".").unwrap()).0;
     let position_str = name.split_at(filename.find(",").unwrap());
     (
-        position_str.0.parse().unwrap(),
-        position_str.1[1..].parse().unwrap(),
+        position_str.0.parse::<i32>().unwrap() * VOXEL_MAP_REGION_WIDTH as i32,
+        position_str.1[1..].parse::<i32>().unwrap() * VOXEL_MAP_REGION_HEIGHT as i32,
     )
 }
 

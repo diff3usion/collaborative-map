@@ -11,11 +11,14 @@ module.exports = {
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
     },
-    devtool:"source-map",
-    devServer: { 
-        contentBase: path.join(__dirname, "src"), 
+    devtool: "source-map",
+    devServer: {
+        contentBase: path.join(__dirname, "src"),
         watchContentBase: true,
         host: '127.0.0.1'
+    },
+    experiments: {
+        asyncWebAssembly: true,
     },
     module: {
         rules: [

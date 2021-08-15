@@ -7,7 +7,7 @@
     "webpack": "webpack",
     "start": "webpack serve --mode development",
     "build": "webpack --mode production",
-    "wasm": "wasm-pack build ./model --out-dir ../src/model/build --out-name index"
+    "model": "wasm-pack build ./model --out-name index && yarn upgrade model"
   },
   "keywords": [],
   "author": "diff3usion",
@@ -21,6 +21,7 @@
     "@zip.js/zip.js": "^2.3.7",
     "antd": "^4.16.8",
     "lodash": "^4.17.21",
+    "model": "file:model/pkg",
     "pixi.js": "^6.0.4",
     "react": "^17.0.2",
     "react-device-detect": "^1.17.0",

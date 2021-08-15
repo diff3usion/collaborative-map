@@ -36,16 +36,35 @@ pub fn loadMcMapColorTable(json: &str) {
     renderer::mc_map_renderer::load_color_table(json);
 }
 
-fn stringify(encoded: &[u8]) -> String {
-    unsafe { std::str::from_utf8_unchecked(&encoded).to_owned() }
+#[wasm_bindgen]
+#[allow(non_snake_case)]
+pub fn getRegionRect(region: u16) -> Option<Vec<i32>> {
+    match MAP_REGION_ID_STORE.lock().unwrap().get(region) {
+        Some(region) => Some(vec![
+            region.position.0,
+            region.position.1,
+            region.size.0 as i32,
+            region.size.1 as i32,
+        ]),
+        None => None,
+    }
 }
 
 #[wasm_bindgen]
 #[allow(non_snake_case)]
-pub fn getLocationMeta(region: u16, x: usize, z: usize) -> Option<String> {
+pub fn getRegionTime(region: u16) -> Option<u64> {
+    match MAP_REGION_ID_STORE.lock().unwrap().get(region) {
+        Some(region) => Some(region.modify_time),
+        None => None,
+    }
+}
+
+#[wasm_bindgen]
+#[allow(non_snake_case)]
+pub fn getLocationMeta(region: u16, x: usize, z: usize) -> Option<Vec<u8>> {
     match MAP_REGION_ID_STORE.lock().unwrap().get(region) {
         Some(region) => match region.get_location(x, z) {
-            Some(location) => Some(stringify(&location.encode())),
+            Some(location) => Some(location.encode()),
             None => None,
         },
         None => None,
@@ -54,13 +73,13 @@ pub fn getLocationMeta(region: u16, x: usize, z: usize) -> Option<String> {
 
 #[wasm_bindgen]
 #[allow(non_snake_case)]
-pub fn getBlockMeta(region: u16, x: usize, z: usize, i: usize) -> Option<String> {
+pub fn getBlockMeta(region: u16, x: usize, z: usize, i: usize) -> Option<Vec<u8>> {
     match MAP_REGION_ID_STORE.lock().unwrap().get(region) {
         Some(region) => match region.get_location(x, z) {
             Some(location) => match region.get_blocks(location) {
                 Some(blocks) => {
                     if blocks.len() > i {
-                        Some(stringify(&blocks[i].encode()))
+                        Some(blocks[i].encode())
                     } else {
                         None
                     }
@@ -80,4 +99,17 @@ pub fn getBlockState(key: u16) -> Option<String> {
         Some(bs) => Some(bs.stringify()),
         None => None,
     }
+}
+
+use utils::*;
+#[wasm_bindgen]
+#[allow(non_snake_case)]
+pub fn regionsOfRect(x: i32, y: i32, w: usize, h: usize) -> Vec<u16> {
+    let mut res: Vec<u16> = Vec::new();
+    for (id, region) in MAP_REGION_ID_STORE.lock().unwrap().iter() {
+        if does_two_rects_overlap((region.position, region.size), ((x, y), (w, h))) {
+            res.push(*id)
+        }
+    }
+    res
 }

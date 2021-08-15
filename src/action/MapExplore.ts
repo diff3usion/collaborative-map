@@ -1,6 +1,6 @@
-import { map, filter, pairwise, window, withLatestFrom, switchMap, distinctUntilChanged } from "rxjs"
+import { map, filter, pairwise, window, withLatestFrom, switchMap, distinctUntilChanged, tap } from "rxjs"
 import { canvasWheel$, rendererPointerDown$, rendererPointerMove$ } from "../intent/Map"
-import { MapControlMode } from "../model/map/Type"
+import { MapControlMode } from "../model/Type"
 import { rendererPointerIsDown$, rendererCursorStyle$, cursorRelativePosition$, viewport$, scale$, viewportUpdateObserver, filterPointerIsDown, mapToRelativePosition } from "../store/Map"
 import { filterControlMode } from "../store/MapControl"
 import { PlaneVector, EventButtonType, Viewport, ViewportUpdate } from "../Type"

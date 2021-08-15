@@ -10,7 +10,7 @@ import { InfoPanel } from "./InfoPanel";
 
 import "./MainPanel.css"
 import { MarkingTypeControl, markingTypeControlWidth } from "./MarkingSubControl";
-import { MapControlMode } from "../../model/map/Type";
+import { MapControlMode } from "../../model/Type";
 import { MapContainer } from "../MapContainer";
 import { controlMode$ } from "../../store/MapControl";
 

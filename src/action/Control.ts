@@ -1,6 +1,6 @@
 import { distinctUntilChanged, filter, mapTo, merge } from "rxjs"
 import { bottomControlExploreClick$, bottomControlMarkingClick$, bottomControlUploadsClick$, documentKeyPress$ } from "../intent/Control"
-import { MapControlMode } from "../model/map/Type"
+import { MapControlMode } from "../model/Type"
 import { controlMode$ } from "../store/MapControl"
 
 merge(

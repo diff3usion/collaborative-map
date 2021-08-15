@@ -67,9 +67,9 @@ const renderRegion: (region: MapRegion) => Promise<MapRegion>
         return region
     }
 
-newRegion$
-    .pipe(
-        mergeMap(renderRegion),
-    )
-    .subscribe(RenderedRegion$)
+// newRegion$
+//     .pipe(
+//         mergeMap(renderRegion),
+//     )
+//     .subscribe(RenderedRegion$)
 

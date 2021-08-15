@@ -1,4 +1,4 @@
-import { MapControlMode } from "../model/map/Type"
+import { MapControlMode } from "../model/Type"
 
 import './index.css'
 
