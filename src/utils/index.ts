@@ -1,7 +1,7 @@
 import _, { map } from "lodash";
 import { InteractionEvent, Point } from "pixi.js";
 import { isFirefox } from 'react-device-detect';
-import { PlaneVector, Viewport } from "../Type";
+import { MatrixOf, NumMatrix, PlaneVector, TupleOf, Viewport } from "../Type";
 
 
 export class TwoWayMap<K, V> implements Map<K, V>{
@@ -64,11 +64,16 @@ export class TwoWayMap<K, V> implements Map<K, V>{
 export const fillArray: <T>(length: number, value: T) => T[]
     = (length, value) => new Array(length).fill(0).map(() => value)
 
-export const initArray: <T>(length: number, producer: (index: number) => T) => T[]
-    = (length, producer) => new Array(length).fill(0).map((_, index) => producer(index))
+export const initArray = <T>(length: number, producer: (index: number) => T) =>
+    new Array(length).fill(0).map((_, index) => producer(index))
 
-export const initMatrix: <T>(row: number, col: number, producer: (index?: number) => T) => T[][]
-    = (row, col, producer) => initArray(row, () => initArray(col, producer))
+export const initTuple = initArray as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
+
+export const initMatrix = <T, R extends number, C extends number>(row: R, col: C, producer: (row: number, col: number) => T) =>
+    new Array(row).fill(0).map((_, r) => new Array(col).fill(0).map((_, c) => producer(r, c))) as MatrixOf<T, R, C>
+
+export const mapMatrix = <T, R extends number, C extends number>(m: MatrixOf<T, R, C>, producer: (val: T, row: number, col: number) => T) =>
+    m.map((row, r) => row.map((val, c) => producer(val, r, c))) as MatrixOf<T, R, C>
 
 export const initTempCanvas: (width: number, height: number) => HTMLCanvasElement
     = (width, height) => {
@@ -155,7 +160,7 @@ export const globalToRelativePosition: (globalPosition: PlaneVector, viewport: V
     = ([globalX, globalY], { position: [posX, posY], scale }) =>
         [(globalX - posX) / scale, (globalY - posY) / scale]
 
-export const relativeToGlobalPosition: (globalPosition: PlaneVector, viewport: Viewport) => PlaneVector
+export const relativeToGlobalPosition: (relativePosition: PlaneVector, viewport: Viewport) => PlaneVector
     = ([relativeX, relativeY], { position: [posX, posY], scale }) =>
         [relativeX * scale + posX, relativeY * scale + posY]
 

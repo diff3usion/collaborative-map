@@ -1,8 +1,10 @@
 import { BehaviorSubject, distinctUntilChanged, filter, map, Observable, Observer, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
 
-import { EventButtonType, PlaneVector, ViewportUpdate } from "../Type"
+import { EventButtonType, PlaneRect, PlaneVector, Viewport, ViewportUpdate } from "../Type"
 import { distinctPlaneVector } from "../utils/rx"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils"
+import { mainPanelSize$ } from "../intent/MainPanel"
+import { divideRectByHalf, planeVectorsFitRect, rectCenter, scaleRectWithMinSize, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
 
 const viewportUpdateSubject = new BehaviorSubject<ViewportUpdate>({ viewport: { position: [0, 0], scale: 1 }, animated: false })
 export const viewportUpdateObserver: Observer<ViewportUpdate> = viewportUpdateSubject
@@ -44,3 +46,26 @@ export const mapToGlobalPosition: () => (ob: Observable<PlaneVector>) => Observa
         withLatestFrom(viewport$),
         map(args => relativeToGlobalPosition(...args)),
     )
+
+export const viewportFocusRect: () => (ob: Observable<PlaneRect>) => Observable<Viewport>
+    = () => ob => ob.pipe(
+        withLatestFrom(viewport$, mainPanelSize$),
+        map(([rect, viewport, size]) => {
+            console.log(rect)
+            const globalRect = [relativeToGlobalPosition(rect[0], viewport), vectorTimes(viewport.scale, rect[1])] as PlaneRect
+            console.log(globalRect)
+            const displayRect = divideRectByHalf([[0, 0], size], true)[1]
+            console.log(displayRect)
+            const scale = scaleToFitRectIn(globalRect, displayRect[1])
+            console.log(scale)
+            console.log(relativeToGlobalPosition(rectCenter(globalRect), viewport))
+            const transformation = scaleWithMovingPoint(scale, rectCenter(globalRect), rectCenter(displayRect))
+            const position = transformation(viewport.position)
+            console.log(position)
+            return {
+                position: transformation(viewport.position),
+                scale: scale * viewport.scale,
+            }
+        })
+    )
+

@@ -1,4 +1,5 @@
-import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport } from "../Type"
+import { boundedNumber, mapMatrix } from "."
+import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, MatrixOf, NumMatrix, PlaneSize } from "../Type"
 
 export const threePointsCCW: (p0: PlaneVector, p1: PlaneVector, p2: PlaneVector) => boolean = ([ax, ay], [bx, by], [cx, cy]) =>
     (cy - ay) * (bx - ax) > (by - ay) * (cx - ax)
@@ -71,3 +72,52 @@ export const planeVectorShift: (v: PlaneVector, viewport: Viewport) => PlaneVect
 
 export const planeVectorUnshift: (v: PlaneVector, viewport: Viewport) => PlaneVector
     = (v, { position, scale }) => vectorTimes(1 / scale, vectorMinus(v, position))
+
+export const boundedVector = <V extends NumTuple<number>>(lower: number, upper: number, vector: V) =>
+    vector.map(v => boundedNumber(lower, upper, v)) as V
+
+export const planeVectorsFitRect: (vectors: PlaneVector[]) => PlaneRect
+    = vectors => {
+        const res = vectors.reduce<NumMatrix<2, 2>>((prev, curr) =>
+            mapMatrix<number, 2, 2>(prev, (val, row, col) => (row ? Math.max : Math.min)(val, curr[col])),
+            [[Number.MAX_VALUE, Number.MAX_VALUE], [-Number.MAX_VALUE, -Number.MAX_VALUE]])
+        res[1] = vectorMinus(res[1], res[0])
+        res[1] = boundedVector(1, Infinity, res[1])
+        return res
+    }
+
+export const scaleWithMovingPoint: (scale: number, from: PlaneVector, to: PlaneVector) => (v: PlaneVector) => PlaneVector
+    = (scale, from, to) =>
+        v => vectorMinus(to, vectorTimes(scale, vectorMinus(from, v)))
+
+export const scaleWithFixedPoint: (scale: number, fixed: PlaneVector) => (v: PlaneVector) => PlaneVector
+    = (scale, fixed) =>
+        scaleWithMovingPoint(scale, fixed, fixed)
+
+export const scaleRectWithFixedPoint: (rect: PlaneRect, scale: number, fixed: PlaneVector) => PlaneRect
+    = ([position, size], scale, fixed) =>
+        [scaleWithFixedPoint(scale, fixed)(position), vectorTimes(scale, size)]
+
+export const scaleRectWithMinSize: (rect: PlaneRect, scale: number, fixed: PlaneVector, min: number) => PlaneRect
+    = ([position, size], scale, fixed, min) => {
+        if (size[0] * scale < min) scale = min / size[0]
+        if (size[1] * scale < min) scale = min / size[1]
+        return scaleRectWithFixedPoint([position, size], scale, fixed)
+    }
+
+export const divideRectByHalf: (rect: PlaneRect, isHorizontal: boolean) => [PlaneRect, PlaneRect]
+    = ([[x, y], [w, h]], isHorizontal) =>
+        isHorizontal ? [
+            [[x, y], [w / 2, h]],
+            [[x + w / 2, y], [w / 2, h]],
+        ] : [
+            [[x, y], [w, h / 2]],
+            [[x, y + h / 2], [w, h / 2]],
+        ]
+
+export const rectCenter: (rect: PlaneRect) => PlaneVector
+    = ([[x, y], [w, h]]) => [x + w / 2, y + h / 2]
+
+export const scaleToFitRectIn: (rect: PlaneRect, size: PlaneSize) => number
+    = ([_, [w, h]], [sw, sh]) =>
+        Math.min(sw / w, sh / h)

@@ -1,4 +1,4 @@
-import { BehaviorSubject, filter, map, Observable, Subject, withLatestFrom } from "rxjs"
+import { BehaviorSubject, Subject } from "rxjs"
 import { markingTypeMaxPointsMap } from "../Constant"
 import { MapControlMode, MapMarkingMode, MapMarkingStage, PlaneVector } from "../Type"
 import { filterWithMultipleLatestFrom, filterThatLatestEquals } from "../utils/rx"
@@ -9,13 +9,13 @@ export const markingStage$ = new BehaviorSubject<MapMarkingStage>(MapMarkingStag
 
 export const tempPoint$ = new Subject<PlaneVector>()
 export const placedPoints$ = new BehaviorSubject<PlaneVector[]>([])
-export const confirmedPoints$ = new BehaviorSubject<PlaneVector[]>([])
+export const confirmedPoints$ = new Subject<PlaneVector[]>()
 
 export const filterIsMarkingMode = () => filterControlMode(MapControlMode.Marking)
 
 const filterMarkingStage = filterThatLatestEquals(markingStage$)
-export const filterIsDrawingStage = filterMarkingStage(MapMarkingStage.Drawing)
-export const filterIsSpecifyingStage = filterMarkingStage(MapMarkingStage.Specifying)
+export const filterIsDrawingStage = () => filterMarkingStage(MapMarkingStage.Drawing)
+export const filterIsSpecifyingStage = () => filterMarkingStage(MapMarkingStage.Specifying)
 
 export const filterCanPlaceMorePoints = () =>
     filterWithMultipleLatestFrom(placedPoints$, markingMode$)

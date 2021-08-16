@@ -9,7 +9,11 @@ import {
     placedPointPointerUp$,
     placedPointPointerMove$,
     placedPointPointerOver$,
-    placedPointPointerOut$
+    placedPointPointerOut$,
+    endPointPointerDown$,
+    endPointPointerUp$,
+    startPointPointerDown$,
+    startPointPointerUp$
 } from "../../../intent/MapMarking"
 import { PlaneVector } from "../../../Type"
 import { EllipseMarker, LineMarker, MarkerGraphics, MarkerOptions, PolygonMarker, RectMarker, SinglePointMarker } from "./MarkerGraphics"
@@ -46,6 +50,8 @@ export class MarkingPointStart extends SinglePointMarker {
         const hoverOptions = { fillColor: 0xAAFFAA }
         super(v, normalOptions)
         collectPlacedPointEvents(this)
+        this.collect('pointerdown', startPointPointerDown$)
+        this.collect('pointerup', startPointPointerUp$)
         this.observe(placedPointPointerOver$.pipe(filter(e => e.currentTarget === this.g)), () => {
             this.applyOptions(hoverOptions)
         })
@@ -80,6 +86,8 @@ export class MarkingPointEnd extends SinglePointMarker {
         const hoverOptions: MarkerOptions = { fillColor: 0xAAAAFF }
         super(v, normalOptions)
         collectPlacedPointEvents(this)
+        this.collect('pointerdown', endPointPointerDown$)
+        this.collect('pointerup', endPointPointerUp$)
         this.observe(placedPointPointerOver$.pipe(filter(e => e.currentTarget === this.g)), () => {
             this.applyOptions(hoverOptions)
         })
