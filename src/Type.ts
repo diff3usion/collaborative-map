@@ -24,13 +24,17 @@ export enum MapControlMode {
     Uploads,
 }
 
-
 export enum MapMarkingMode {
     Point,
     Path,
     Rect,
     Polygon,
     Ellipse,
+}
+
+export enum MapMarkingStage {
+    Drawing,
+    Specifying,
 }
 
 export enum EventButtonType {

@@ -1,11 +1,7 @@
 import { BehaviorSubject, Observable, withLatestFrom, filter, map } from "rxjs"
 import { MapControlMode } from "../Type"
+import { filterThatLatestEquals } from "../utils/rx"
 
 export const controlMode$ = new BehaviorSubject<MapControlMode>(MapControlMode.Explore)
 
-export const filterControlMode: <T>(mode: MapControlMode) => (ob: Observable<T>) => Observable<T>
-    = mode => ob => ob.pipe(
-        withLatestFrom(controlMode$),
-        filter(([_, currentMode]) => currentMode === mode),
-        map(([v]) => v)
-    )
+export const filterControlMode = filterThatLatestEquals(controlMode$)

@@ -1,7 +1,19 @@
 import { InteractionEvent } from "pixi.js"
-import { distinctUntilChanged, filter, fromEvent, map, Observable, Observer, Subscription, withLatestFrom } from "rxjs"
+import { distinctUntilChanged, filter, fromEvent, map, Observable, Observer, Subject, Subscription, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
 import { EventButtonType, PlaneVector, Viewport } from "../Type"
+
+type ExtractObservableArray<T extends Array<Observable<any>>> =
+    { [K in keyof T]: T[K] extends Observable<infer V> ? V : never }
+export const filterWithMultipleLatestFrom = <F extends Array<Observable<any>>>(...targets: F) =>
+    (predicate: (value: ExtractObservableArray<F>) => boolean) => <T>(ob: Observable<T>) => ob.pipe(
+        withLatestFrom(...targets),
+        filter(([_, ...latestes]) => predicate(latestes as unknown as ExtractObservableArray<F>)),
+        map(([v]) => v)
+    )
+
+export const filterThatLatestEquals = <F>(target$: Observable<F>) => (value: F) =>
+    filterWithMultipleLatestFrom(target$)(([latest]) => latest === value)
 
 export const filterWithoutTarget = () => filter((e: InteractionEvent) => !e.currentTarget)
 export const filterWithTarget = () => filter((e: InteractionEvent) => e.currentTarget !== undefined && e.currentTarget !== null)
