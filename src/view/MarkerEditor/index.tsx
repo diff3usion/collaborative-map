@@ -1,11 +1,12 @@
+import { Label } from "@fluentui/react"
 import { useState } from "react"
 
 import "./MarkerEditor.css"
 
 export const MarkerEditor = () => {
     return (
-        <div id="marker-editor"> 
-            
+        <div className="marker-editor"> 
+            <Label>hello!</Label>
         </div>
     )
 }

@@ -2,7 +2,6 @@ import { mergeMap, from, filter } from "rxjs";
 import { VoxelRegionZipFiles$ } from "../App";
 import { RenderedRegion$ } from "../store/MapData";
 import { PlaneSize, PlaneVector } from "../Type";
-import { bytesToNumber, imageDataToBase64Url, initArray } from "../utils";
 import { getBlockMeta, getLocationMeta, getBlockState, regionsOfRect, loadVoxelMapCacheFile, renderLoadedRegion, getRegionTime, getRegionRect, loadMcMapColorTable } from "model";
 
 export class BlockState {
@@ -24,9 +23,9 @@ export class BlockState {
                 return undefined
             const namespace = capture[1]
             const id = capture[2]
-            const args: { [key: string]: string } = Object.fromEntries(
+            const args: { [key: string]: string } = capture[3] ? Object.fromEntries(
                 capture[3].split(',').map(arg => arg.split('=') as [string, string])
-            )
+            ) : {}
             return new BlockState(namespace, id, args)
         }
 }
@@ -131,6 +130,9 @@ const isZipFile: (file: File) => boolean
 
 import json from './map/renderer/map_color_table.json'
 import { isPointInRect } from "../utils/geometry";
+import { bytesToNumber } from "../utils";
+import { initArray } from "../utils/collection";
+import { imageDataToBase64Url } from "../utils/dom";
 loadMcMapColorTable(JSON.stringify(json))
 VoxelRegionZipFiles$
     .pipe(

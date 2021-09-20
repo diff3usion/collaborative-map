@@ -2,10 +2,10 @@ import { map, pairwise, window, withLatestFrom, switchMap, tap } from "rxjs"
 import { canvasWheel$ } from "../intent/Map"
 import { rendererPointerIsDown$, rendererCursorStyle$, viewport$, scale$, viewportUpdateObserver } from "../store/Map"
 import { filterIsExploreMode } from "../store/MapExplore"
-import { PlaneVector, Viewport, ViewportUpdate, MapControlMode } from "../Type"
+import { PlaneVector, Viewport } from "../Type"
 import { boundedNumber, eventToGlobalPosition, mouseEventToPlaneVector } from "../utils"
-import { scaleRectWithFixedPoint, scaleWithFixedPoint } from "../utils/geometry"
-import { distinctPlaneVector, distinctViewport } from "../utils/rx"
+import { scaleWithFixedPoint } from "../utils/geometry"
+import { distinctPlaneVector, distinctViewport, pairwiseDeltaPlaneVector } from "../utils/rx"
 import { mainButtonDown$, mainButtonDownAndMove$ } from "./Pointer"
 
 const maxScale = 64
@@ -23,8 +23,7 @@ const panAction$ = mainButtonDownAndMove$
         distinctPlaneVector(),
         window(mainButtonDown$),
         switchMap(ob => ob.pipe(
-            pairwise(),
-            map(([[prevX, prevY], [moveX, moveY]]) => ([moveX - prevX, moveY - prevY] as PlaneVector)),
+            pairwiseDeltaPlaneVector(),
             withLatestFrom(viewport$),
             map(([[deltaX, deltaY], { position: [x, y], scale }]) => initViewport([x + deltaX, y + deltaY], scale)),
         )),

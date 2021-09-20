@@ -5,7 +5,8 @@ import { viewportUpdate$ } from "../../store/Map"
 import { RenderedRegion$ } from "../../store/MapData"
 import { PlaneVector } from "../../Type"
 import { pointToVector } from "../../utils"
-import { Transition, transitionPosition, transitionScale } from "../../utils/animation"
+import { transitionPosition, transitionScale, TransitionTicker } from "../../utils/animation"
+import { linear, vectorTransition } from "../../utils/transition"
 
 export const mapContainer = new Container()
 mapContainer.sortableChildren = true
@@ -13,32 +14,32 @@ mapContainer.zIndex = 0
 
 const transitionFrames = 12
 
-let positionTransitioning: Transition<PlaneVector> | undefined;
-let scaleTransitioning: Transition<number> | undefined;
+let positionTransitioning: TransitionTicker<PlaneVector> | undefined;
+let scaleTransitioning: TransitionTicker<number> | undefined;
 
 viewportUpdate$.subscribe(({ viewport: { position, scale }, animated }) => {
     if (animated) {
         if (!positionTransitioning) {
-            positionTransitioning = transitionPosition(
-                transitionFrames,
-                mapContainer,
-                pointToVector(mapContainer.position),
-                position,
-                () => positionTransitioning = undefined
-            ).start()
+            positionTransitioning = transitionPosition(mapContainer, {
+                duration: transitionFrames,
+                from: pointToVector(mapContainer.position),
+                to: position,
+                fn: vectorTransition(linear),
+                complete: () => positionTransitioning = undefined
+            }).start()
         } else {
-            positionTransitioning.revise(position, transitionFrames)
+            positionTransitioning.revise({ to: position, duration: transitionFrames })
         }
         if (!scaleTransitioning) {
-            scaleTransitioning = transitionScale(
-                transitionFrames,
-                mapContainer,
-                mapContainer.scale.x,
-                scale,
-                () => scaleTransitioning = undefined
-            ).start()
+            scaleTransitioning = transitionScale(mapContainer, {
+                duration: transitionFrames,
+                from: mapContainer.scale.x,
+                to: scale,
+                fn: linear,
+                complete: () => scaleTransitioning = undefined
+            }).start()
         } else {
-            scaleTransitioning.revise(scale, transitionFrames)
+            scaleTransitioning.revise({ to: scale, duration: transitionFrames })
         }
     } else {
         mapContainer.position.set(...position)

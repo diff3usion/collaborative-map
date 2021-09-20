@@ -1,10 +1,11 @@
-import { filters, Graphics, Text, Point } from "pixi.js"
-import { Observable, Observer, Subscription, filter } from "rxjs"
+import { Graphics, Text, Point, Ticker } from "pixi.js"
+import { Observable, Observer, Subscription } from "rxjs"
 import { markingContainer } from "./Marking"
 import { PlaneVector, Viewport } from "../../../Type"
-import { planeVectorShift, vectorAbsMinus, vectorAdd, vectorFlip, vectorMinus, vectorTimes } from "../../../utils/geometry"
-import { scale$, viewportUpdate$ } from "../../../store/Map"
-import { linear, Transition, vectorArrayTransition, vectorTransition } from "../../../utils/animation"
+import { planeVectorShift, vectorAbsMinus, vectorMinus } from "../../../utils/geometry"
+import { viewportUpdate$ } from "../../../store/Map"
+import { TransitionTicker } from "../../../utils/animation"
+import { vectorArrayTransition, linear } from "../../../utils/transition"
 
 const transitionFrames = 12
 
@@ -20,8 +21,8 @@ export interface MarkerOptions {
 }
 
 export abstract class MarkerGraphics {
-    private moveTransition?: Transition<PlaneVector[]>
-    private appearTransition?: Transition<number>
+    private moveTransition?: TransitionTicker<PlaneVector[]>
+    private appearTransition?: TransitionTicker<number>
     private subscriptions: Subscription[] = []
     private viewport?: Viewport
     private shiftedVectors: PlaneVector[]
@@ -36,20 +37,25 @@ export abstract class MarkerGraphics {
     protected move(from?: PlaneVector[]) {
         if (from) {
             if (this.moveTransition) {
-                this.moveTransition.revise(this.shiftedVectors, transitionFrames)
+                this.moveTransition.revise({
+                    duration: transitionFrames,
+                    to: this.shiftedVectors,
+                })
             } else {
-                this.moveTransition = new Transition(
-                    transitionFrames, from, this.shiftedVectors,
-                    p => { 
+                this.moveTransition = new TransitionTicker(Ticker.shared, {
+                    duration: transitionFrames,
+                    from,
+                    to: this.shiftedVectors,
+                    fn: vectorArrayTransition(linear),
+                    apply: p => {
                         this.g.position.set(...this.position(p))
                         this.draw(...p)
-                     },
-                    vectorArrayTransition(linear),
-                    () => {
+                    },
+                    complete: () => {
                         this.onViewportUpdate(this.shiftedVectors)
                         this.moveTransition = undefined
                     },
-                ).start()
+                }).start()
             }
         } else {
             this.g.position.set(...this.position(this.shiftedVectors))

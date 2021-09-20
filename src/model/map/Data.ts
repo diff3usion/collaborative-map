@@ -1,7 +1,8 @@
 import _ from "lodash"
 import { BlockState as UnIndexedState } from ".."
 import { PlaneRect } from "../../Type"
-import { bytesToNumber, initArray, numberToBytes } from "../../utils"
+import { bytesToNumber, numberToBytes } from "../../utils"
+import { initArray } from "../../utils/collection"
 
 /**
  *  Map data format with variable block numbers (small endian)

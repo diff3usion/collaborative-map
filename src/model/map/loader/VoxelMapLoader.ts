@@ -1,7 +1,7 @@
 import * as zip from "@zip.js/zip.js"
 import { of, from, forkJoin, map, mergeMap, Observable, filter } from "rxjs"
 
-import { initArray } from "../../../utils"
+import { initArray } from "../../../utils/collection"
 import { UnIndexedRegion, MapRegion, MapBlock, UnfoldedLocation, UnfoldedBlock } from "../Data"
 import { VoxelRegionZipFiles$ } from "../../../App"
 import { regionProvider$ } from ".."

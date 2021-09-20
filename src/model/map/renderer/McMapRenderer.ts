@@ -5,9 +5,10 @@ import { filter, bufferTime, mergeMap, concatMap, tap } from "rxjs"
 import { mapContainer } from "../../../view/MapContainer/Map"
 import { BlockState, MapRegion } from "../Data"
 import json from './map_color_table.json'
-import { imageDataToBase64Url, initArray, initMatrix, initTempCanvas } from "../../../utils"
 import { newRegion$ } from ".."
 import { RenderedRegion$ } from "../../../store/MapData"
+import { imageDataToBase64Url, initTempCanvas } from "../../../utils/dom"
+import { init2dArray, initArray } from "../../../utils/collection"
 
 
 type Color = [number, number, number, number]
@@ -44,7 +45,7 @@ const renderRegion: (region: MapRegion) => Promise<MapRegion>
                 return colorValues[colorIndex]
             }
 
-        const colorMatrix = initMatrix(region.xLength, region.zLength, () => initArray(4, () => 0) as Color)
+        const colorMatrix = init2dArray(region.xLength, region.zLength, () => initArray(4, () => 0) as Color)
         for (let x = 0; x < region.xLength; x++)
             for (let z = 0; z < region.zLength; z++) {
                 const location = region.locationWithOffset(x, z)

@@ -1,7 +1,7 @@
 ///<reference path="path_to_ts/pixi-layers.d.ts">
 
 import * as PIXI from "pixi.js"
-import { BaseTexture, GLTexture, InteractionManager, Renderer, Resource } from "pixi.js"
+import { InteractionManager } from "pixi.js"
 import { useEffect, useRef } from "react"
 
 import { mainPanelSize$ } from "../../intent/MainPanel"
@@ -19,7 +19,7 @@ import { markingContainer } from "./marker/Marking"
 import { mapContainer } from "./Map"
 import { observeEvent } from "../../utils/rx"
 import { documentKeyPress$ } from "../../intent/Control"
-import { gridContainer } from "./Grid"
+import { gridContainer } from "./grid/GridGraphics"
 
 PIXI.settings.FILTER_RESOLUTION = devicePixelRatio
 

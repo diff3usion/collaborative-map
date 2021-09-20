@@ -51,17 +51,10 @@ export const viewportFocusRect: () => (ob: Observable<PlaneRect>) => Observable<
     = () => ob => ob.pipe(
         withLatestFrom(viewport$, mainPanelSize$),
         map(([rect, viewport, size]) => {
-            console.log(rect)
             const globalRect = [relativeToGlobalPosition(rect[0], viewport), vectorTimes(viewport.scale, rect[1])] as PlaneRect
-            console.log(globalRect)
             const displayRect = divideRectByHalf([[0, 0], size], true)[1]
-            console.log(displayRect)
             const scale = scaleToFitRectIn(globalRect, displayRect[1])
-            console.log(scale)
-            console.log(relativeToGlobalPosition(rectCenter(globalRect), viewport))
             const transformation = scaleWithMovingPoint(scale, rectCenter(globalRect), rectCenter(displayRect))
-            const position = transformation(viewport.position)
-            console.log(position)
             return {
                 position: transformation(viewport.position),
                 scale: scale * viewport.scale,

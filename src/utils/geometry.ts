@@ -1,55 +1,64 @@
-import { boundedNumber, mapMatrix } from "."
-import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, MatrixOf, NumMatrix, PlaneSize } from "../Type"
+import { boundedNumber } from "."
+import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf } from "../Type"
+import { initArray, init2dArray, map2dArray } from "./collection"
 
-export const threePointsCCW: (p0: PlaneVector, p1: PlaneVector, p2: PlaneVector) => boolean = ([ax, ay], [bx, by], [cx, cy]) =>
-    (cy - ay) * (bx - ax) > (by - ay) * (cx - ax)
+export const initTuple = initArray as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
+export const initMatrix = init2dArray as <T, R extends number, C extends number>(row: R, col: C, producer: (row: number, col: number) => T) => MatrixOf<T, R, C>
+export const mapMatrix = map2dArray as <T, R extends number, C extends number>(m: MatrixOf<T, R, C>, producer: (val: T, row: number, col: number) => T) => MatrixOf<T, R, C>
 
-export const twoSegmentsIntersect: (s0: PlaneSegment, s1: PlaneSegment) => boolean = ([a, b], [c, d]) =>
-    threePointsCCW(a, c, d) != threePointsCCW(b, c, d) && threePointsCCW(a, b, c) != threePointsCCW(a, b, d)
+export function vectorFlip<V extends NumTuple<number>>(vector: V): V {
+    return vector.map((_, i) => vector[vector.length - 1 - i]) as V
+}
+export function vectorRound<V extends NumTuple<number>>(vector: V): V {
+    return vector.map(Math.round) as V
+}
+export function vectorAdd<V extends NumTuple<number>>(...vectors: V[]): V {
+    return vectors.splice(1).reduce((sum, v) => v.map((n, i) => sum[i] + n) as V, vectors[0])
+}
+export function vectorMinus<V extends NumTuple<number>>(...vectors: V[]): V {
+    return vectors.splice(1).reduce((res, v) => v.map((n, i) => res[i] - n) as V, vectors[0])
+}
+export function vectorAbs<V extends NumTuple<number>>(vector: V): V {
+    return vector.map(Math.abs) as V
+}
+export function vectorAbsMinus<V extends NumTuple<number>>(...vectors: V[]): V {
+    return vectorAbs(vectorMinus(...vectors))
+}
+export function vectorTimes<V extends NumTuple<number>>(multiplier: number, vector: V): V {
+    return vector.map(n => n * multiplier) as V
+}
+export function vectorDist<V extends NumTuple<number>>(v0: V, v1: V): number {
+    return Math.sqrt(v0.reduce((sum, n, idx) => sum + Math.pow(n - v1[idx], 2), 0))
+}
+export function vectorBounded<V extends NumTuple<number>>(lower: number, upper: number, vector: V): V {
+    return vector.map(v => boundedNumber(lower, upper, v)) as V
+}
 
-export const segmentIntersectPath: (s: PlaneSegment, p: PlaneVector[]) => number = (s, p) => {
+export const threePointsCCW: (p0: PlaneVector, p1: PlaneVector, p2: PlaneVector) => boolean
+    = ([ax, ay], [bx, by], [cx, cy]) =>
+        (cy - ay) * (bx - ax) > (by - ay) * (cx - ax)
+
+export const twoSegmentsIntersect: (s0: PlaneSegment, s1: PlaneSegment) => boolean
+    = ([a, b], [c, d]) =>
+        threePointsCCW(a, c, d) != threePointsCCW(b, c, d) && threePointsCCW(a, b, c) != threePointsCCW(a, b, d)
+
+export function segmentIntersectPath(s: PlaneSegment, p: PlaneVector[]): number {
     for (let i = 0; i < p.length - 1; i++)
         if (twoSegmentsIntersect(s, [p[i], p[i + 1]])) return i
     return -1
 }
-
-export const twoPathsIntersect: (p0: PlaneVector[], p1: PlaneVector[]) => [number, number] = (p0, p1) => {
+export function twoPathsIntersect(p0: PlaneVector[], p1: PlaneVector[]): [number, number] {
     for (let i = 0; i < p0.length - 1; i++) {
         const j = segmentIntersectPath([p0[i], p0[i + 1]], p1)
         if (j !== -1) return [i, j]
     }
     return [-1, -1]
 }
-
-export const pathSelfIntersect: (p: PlaneVector[]) => [number, number] = p => {
+export function pathSelfIntersect(p: PlaneVector[]): [number, number] {
     for (let i = 0; i < p.length - 1; i++) for (let j = 0; j < p.length - 1; j++)
         if (Math.abs(i - j) > 1 && twoSegmentsIntersect([p[i], p[i + 1]], [p[j], p[j + 1]])) return [i, j]
     return [-1, -1]
 }
-
-export const vectorFlip = <V extends NumTuple<number>>(vector: V) =>
-    vector.map((_, i) => vector[vector.length - 1 - i]) as V
-
-export const vectorRound = <V extends NumTuple<number>>(vector: V) =>
-    vector.map(Math.round) as V
-
-export const vectorAdd = <V extends NumTuple<number>>(...vectors: V[]) =>
-    vectors.splice(1).reduce((sum, v) => v.map((n, i) => sum[i] + n) as V, vectors[0])
-
-export const vectorMinus = <V extends NumTuple<number>>(...vectors: V[]) =>
-    vectors.splice(1).reduce((res, v) => v.map((n, i) => res[i] - n) as V, vectors[0])
-
-export const vectorAbs = <V extends NumTuple<number>>(vector: V) =>
-    vector.map(Math.abs) as V
-
-export const vectorAbsMinus = <V extends NumTuple<number>>(...vectors: V[]) =>
-    vectorAbs(vectorMinus(...vectors))
-
-export const vectorTimes = <V extends NumTuple<number>>(multiplier: number, vector: V) =>
-    vector.map(n => n * multiplier) as V
-
-export const vectorDist = <V extends NumTuple<number>>(v0: V, v1: V) =>
-    Math.sqrt(v0.reduce((sum, n, idx) => sum + Math.pow(n - v1[idx], 2), 0))
 
 export const isPointInRect: (p: PlaneVector, r: PlaneRect) => boolean
     = ([px, py], [[rx, ry], [rw, rh]]) =>
@@ -61,10 +70,10 @@ export const doesTwoRectsOverlap: (r1: PlaneRect, r2: PlaneRect) => boolean
 
 // Shift: input relative to viewport --> output relative to global
 
-export const numberShift: (n: number, isHorizontal: boolean, viewport: Viewport) => number
+export const positionShift: (n: number, isHorizontal: boolean, viewport: Viewport) => number
     = (n, isHorizontal, { position: [x, y], scale }) => scale * n + (isHorizontal ? y : x)
 
-export const numberUnshift: (n: number, isHorizontal: boolean, viewport: Viewport) => number
+export const positionUnshift: (n: number, isHorizontal: boolean, viewport: Viewport) => number
     = (n, isHorizontal, { position: [x, y], scale }) => (n - (isHorizontal ? y : x)) / scale
 
 export const planeVectorShift: (v: PlaneVector, viewport: Viewport) => PlaneVector
@@ -73,16 +82,13 @@ export const planeVectorShift: (v: PlaneVector, viewport: Viewport) => PlaneVect
 export const planeVectorUnshift: (v: PlaneVector, viewport: Viewport) => PlaneVector
     = (v, { position, scale }) => vectorTimes(1 / scale, vectorMinus(v, position))
 
-export const boundedVector = <V extends NumTuple<number>>(lower: number, upper: number, vector: V) =>
-    vector.map(v => boundedNumber(lower, upper, v)) as V
-
 export const planeVectorsFitRect: (vectors: PlaneVector[]) => PlaneRect
     = vectors => {
         const res = vectors.reduce<NumMatrix<2, 2>>((prev, curr) =>
             mapMatrix<number, 2, 2>(prev, (val, row, col) => (row ? Math.max : Math.min)(val, curr[col])),
             [[Number.MAX_VALUE, Number.MAX_VALUE], [-Number.MAX_VALUE, -Number.MAX_VALUE]])
         res[1] = vectorMinus(res[1], res[0])
-        res[1] = boundedVector(1, Infinity, res[1])
+        res[1] = vectorBounded(1, Infinity, res[1])
         return res
     }
 

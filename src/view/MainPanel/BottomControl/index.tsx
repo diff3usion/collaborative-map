@@ -4,7 +4,7 @@ import { useId } from '@fluentui/react-hooks'
 import { Property } from "csstype"
 
 import "./BottomControl.css"
-import { useBehaviorSubjectAsState, useEventObservedRef } from "../../../utils/hook"
+import { useBehaviorSubjectAsState, useEventObservedCallback } from "../../../utils/hook"
 import { BottomButton, BottomButtonStyle } from '../BottomButton'
 import { CssVariables } from "../../"
 import { bottomControlExploreClick$, bottomControlMarkingClick$, bottomControlUploadsClick$ } from "../../../intent/Control"
@@ -21,7 +21,7 @@ const buttonActiveStyle = (c: Property.Color) => ({ width: 96, height: 96, iconS
 const ExploreButton: () => JSX.Element
     = () => {
         const tooltipId = useId('explore');
-        const buttonRef = useEventObservedRef<HTMLDivElement, MouseEvent>('click', bottomControlExploreClick$)
+        const buttonCallback = useEventObservedCallback<HTMLDivElement, MouseEvent>('click', bottomControlExploreClick$)
         const currentMode = useBehaviorSubjectAsState(controlMode$)
         const mode = MapControlMode.Explore
         const color = CssVariables.controlModeColors(mode)
@@ -33,7 +33,7 @@ const ExploreButton: () => JSX.Element
                     normalStyle={buttonNormalStyle}
                     hoverStyle={buttonHoverStyle(color)}
                     activeStyle={buttonActiveStyle(color)}
-                    ref={buttonRef}
+                    ref={buttonCallback}
                 />
             </TooltipHost>
         )
@@ -42,7 +42,7 @@ const ExploreButton: () => JSX.Element
 const MarkingButton: () => JSX.Element
     = () => {
         const tooltipId = useId('marking');
-        const buttonRef = useEventObservedRef<HTMLDivElement, MouseEvent>('click', bottomControlMarkingClick$)
+        const buttonCallback = useEventObservedCallback<HTMLDivElement, MouseEvent>('click', bottomControlMarkingClick$)
         const currentMode = useBehaviorSubjectAsState(controlMode$)
         const mode = MapControlMode.Marking
         const color = CssVariables.controlModeColors(mode)
@@ -54,7 +54,7 @@ const MarkingButton: () => JSX.Element
                     normalStyle={buttonNormalStyle}
                     hoverStyle={buttonHoverStyle(color)}
                     activeStyle={buttonActiveStyle(color)}
-                    ref={buttonRef}
+                    ref={buttonCallback}
                 />
             </TooltipHost>
         )
@@ -63,7 +63,7 @@ const MarkingButton: () => JSX.Element
 const UploadButton: () => JSX.Element
     = () => {
         const tooltipId = useId('upload');
-        const buttonRef = useEventObservedRef<HTMLDivElement, MouseEvent>('click', bottomControlUploadsClick$)
+        const buttonCallback = useEventObservedCallback<HTMLDivElement, MouseEvent>('click', bottomControlUploadsClick$)
         const currentMode = useBehaviorSubjectAsState(controlMode$)
         const mode = MapControlMode.Uploads
         const color = CssVariables.controlModeColors(mode)
@@ -75,7 +75,7 @@ const UploadButton: () => JSX.Element
                     normalStyle={buttonNormalStyle}
                     hoverStyle={buttonHoverStyle(color)}
                     activeStyle={buttonActiveStyle(color)}
-                    ref={buttonRef}
+                    ref={buttonCallback}
                 />
             </TooltipHost>
         )

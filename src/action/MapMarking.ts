@@ -115,7 +115,7 @@ markingEndEvent$.pipe(
     switchToLastestFrom(placedPoints$),
 ).subscribe(confirmedPoints$)
 
-markingEndEvent$.pipe(
+confirmedPoints$.pipe(
     mapTo(MapMarkingStage.Specifying),
 ).subscribe(markingStage$)
 

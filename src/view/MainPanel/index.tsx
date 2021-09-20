@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { CssVariables } from "..";
 import { mainPanelResizeObserverEntry$ } from "../../intent/MainPanel";
 import { useBehaviorSubjectAsState, useResizeObservedRef } from "../../utils/hook";
-import { ConceptEditor } from "../editor/ConceptEditor";
 import { ButtomControl } from "./BottomControl";
 import { BottomSubControl } from "./BottomSubControl";
 import { FloatingWindow } from "./FloatingWindow";
@@ -13,6 +12,8 @@ import { MarkingTypeControl, markingTypeControlWidth } from "./MarkingSubControl
 import { MapContainer } from "../MapContainer";
 import { controlMode$ } from "../../store/MapControl";
 import { MapControlMode } from "../../Type";
+import { markingMode$ } from "../../store/MapMarking";
+import { MarkerEditor } from "../MarkerEditor";
 
 const subControlMargin = 24
 
@@ -27,22 +28,29 @@ const subControls = (mode: MapControlMode) => {
     ]
 }
 
+export const markerEditer = () => (
+    <FloatingWindow
+        className="new_marker_window"
+        translate={[-200, -200]}
+        title="新建标记"
+        themeColor={CssVariables.themeColorMarking}
+    >
+        <MarkerEditor />
+    </FloatingWindow>
+)
+
 export const MainPanel = () => {
     const panel = useResizeObservedRef<HTMLDivElement>(mainPanelResizeObserverEntry$)
     const currentControlMode = useBehaviorSubjectAsState(controlMode$)
+    const currentMarkingMode = useBehaviorSubjectAsState(markingMode$)
 
     return (
         <div id="main-panel" ref={panel} >
-            <MapContainer/>
+            <MapContainer />
             <InfoPanel />
             <ButtomControl />
             {subControls(currentControlMode)}
-            <FloatingWindow
-                title="新建标记"
-                themeColor={CssVariables.themeColorMarking}
-            >
-                <ConceptEditor />
-            </FloatingWindow>
+            {markerEditer()}
         </div>
     )
 }

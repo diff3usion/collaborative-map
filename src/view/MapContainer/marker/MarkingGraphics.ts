@@ -1,19 +1,10 @@
 import { filters } from "pixi.js"
 import { filter, Observable, Observer } from "rxjs"
 import {
-    tempPointPointerUp$,
-    tempPointPointerMove$,
-    tempPointPointerOver$,
-    tempPointPointerOut$,
-    placedPointPointerDown$,
-    placedPointPointerUp$,
-    placedPointPointerMove$,
-    placedPointPointerOver$,
-    placedPointPointerOut$,
-    endPointPointerDown$,
-    endPointPointerUp$,
-    startPointPointerDown$,
-    startPointPointerUp$
+    tempPointPointerUp$, tempPointPointerMove$, tempPointPointerOver$, tempPointPointerOut$,
+    placedPointPointerDown$, placedPointPointerUp$, placedPointPointerMove$, placedPointPointerOver$, placedPointPointerOut$,
+    endPointPointerDown$, endPointPointerUp$,
+    startPointPointerDown$, startPointPointerUp$
 } from "../../../intent/MapMarking"
 import { PlaneVector } from "../../../Type"
 import { EllipseMarker, LineMarker, MarkerGraphics, MarkerOptions, PolygonMarker, RectMarker, SinglePointMarker } from "./MarkerGraphics"
@@ -44,7 +35,7 @@ const collectPlacedPointEvents = (mg: MarkerGraphics) => {
     e.collect('pointerout', placedPointPointerOut$)
 }
 
-export class MarkingPointStart extends SinglePointMarker {
+export class PlacedPointStart extends SinglePointMarker {
     constructor(v: PlaneVector) {
         const normalOptions = { fillColor: 0xCCFFCC }
         const hoverOptions = { fillColor: 0xAAFFAA }
@@ -61,7 +52,7 @@ export class MarkingPointStart extends SinglePointMarker {
     }
 }
 
-export class MarkingPointMiddle extends SinglePointMarker {
+export class PlacedPointMiddle extends SinglePointMarker {
     constructor(v: PlaneVector, idx?: number) {
         const normalOptions: MarkerOptions = { fillColor: 0xFFFAFA }
         const hoverOptions: MarkerOptions = { fillColor: 0xFFCCCC }
@@ -80,7 +71,7 @@ export class MarkingPointMiddle extends SinglePointMarker {
     }
 }
 
-export class MarkingPointEnd extends SinglePointMarker {
+export class PlacedPointEnd extends SinglePointMarker {
     constructor(v: PlaneVector) {
         const normalOptions: MarkerOptions = { fillColor: 0xCCCCFF }
         const hoverOptions: MarkerOptions = { fillColor: 0xAAAAFF }
@@ -97,7 +88,7 @@ export class MarkingPointEnd extends SinglePointMarker {
     }
 }
 
-export class MarkingPointUnfinished extends SinglePointMarker {
+export class PlacedPointUnfinished extends SinglePointMarker {
     constructor(v: PlaneVector) {
         const normalOptions = { fillColor: 0xFFCCCC }
         const hoverOptions = { fillColor: 0xFFCCCC }
@@ -113,7 +104,7 @@ export class MarkingPointUnfinished extends SinglePointMarker {
     }
 }
 
-export class MarkingPointTemp extends SinglePointMarker {
+export class TempPoint extends SinglePointMarker {
     constructor(v: PlaneVector) {
         const options: MarkerOptions = { fillAlpha: 0.5 }
         super(v, options)
@@ -121,13 +112,32 @@ export class MarkingPointTemp extends SinglePointMarker {
     }
 }
 
-export class MarkingPathSegment extends LineMarker {
+export class ConfirmedPoint extends SinglePointMarker {
+    constructor(v: PlaneVector, idx?: number) {
+        const normalOptions: MarkerOptions = { fillColor: 0xFFFAFA }
+        const hoverOptions: MarkerOptions = { fillColor: 0xFFCCCC }
+        if (idx) {
+            normalOptions.text = `${idx}`
+            hoverOptions.text = `${idx}`
+        }
+        super(v, normalOptions)
+        collectPlacedPointEvents(this)
+        this.observe(placedPointPointerOver$.pipe(filter(e => e.currentTarget === this.g)), () => {
+            this.applyOptions(hoverOptions)
+        })
+        this.observe(placedPointPointerOut$.pipe(filter(e => e.currentTarget === this.g)), () => {
+            this.applyOptions(normalOptions)
+        })
+    }
+}
+
+export class PlacedPathSegment extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         super(p0, p1)
     }
 }
 
-export class MarkingTempSegment extends LineMarker {
+export class TempPathSegment extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         super(p0, p1, undefined, true)
         const colorMatrix = new filters.AlphaFilter();
@@ -136,20 +146,26 @@ export class MarkingTempSegment extends LineMarker {
     }
 }
 
-export class MarkingPolygonBorder extends LineMarker {
+export class ConfirmedPathSegment extends LineMarker {
+    constructor(p0: PlaneVector, p1: PlaneVector) {
+        super(p0, p1)
+    }
+}
+
+export class PlacedPolygonBorder extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         const normalOptions: MarkerOptions = { lineColor: 0xAAAAAA, lineWidth: 4 }
         super(p0, p1, normalOptions)
     }
 }
 
-export class MarkingPolygonBorderCrossed extends LineMarker {
+export class PlacedPolygonBorderCrossed extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         super(p0, p1, { lineWidth: 4, lineColor: 0xFFCCCC })
     }
 }
 
-export class MarkingPolygonBorderTemp extends LineMarker {
+export class TempPolygonBorder extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         super(p0, p1, { lineColor: 0xAAAAAA, lineWidth: 4 }, true)
         const colorMatrix = new filters.AlphaFilter();
@@ -158,37 +174,37 @@ export class MarkingPolygonBorderTemp extends LineMarker {
     }
 }
 
-export class MarkingRectPlaced extends RectMarker {
+export class PlacedRect extends RectMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         super(p0, p1)
     }
 }
 
-export class MarkingRectTemp extends RectMarker {
+export class TempRect extends RectMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
         super(p0, p1)
     }
 }
 
-export class MarkingPolygonPlaced extends PolygonMarker {
+export class PlacedPolygon extends PolygonMarker {
     constructor(vectors: PlaneVector[]) {
         super(vectors)
     }
 }
 
-export class MarkingPolygonTemp extends PolygonMarker {
+export class TempPolygon extends PolygonMarker {
     constructor(vectors: PlaneVector[]) {
         super([vectors[0], ...vectors.slice(-2)])
     }
 }
 
-export class MarkingEllipsePlaced extends EllipseMarker {
+export class PlacedEllipse extends EllipseMarker {
     constructor(center: PlaneVector, p: PlaneVector) {
         super(center, p)
     }
 }
 
-export class MarkingEllipseTemp extends EllipseMarker {
+export class TempEllipse extends EllipseMarker {
     constructor(center: PlaneVector, p: PlaneVector) {
         super(center, p)
     }

@@ -4,26 +4,25 @@ import { PlaneVector, MapMarkingMode } from "../../../Type"
 import { segmentIntersectPath } from "../../../utils/geometry"
 import { MarkerGraphics } from "./MarkerGraphics"
 import {
-    MarkingEllipsePlaced,
-    MarkingEllipseTemp,
-    MarkingPathSegment,
-    MarkingPointEnd,
-    MarkingPointMiddle,
-    MarkingPointStart,
-    MarkingPointTemp,
-    MarkingPointUnfinished,
-    MarkingPolygonBorder,
-    MarkingPolygonBorderCrossed,
-    MarkingPolygonBorderTemp,
-    MarkingPolygonPlaced,
-    MarkingPolygonTemp,
-    MarkingRectPlaced,
-    MarkingRectTemp,
-    MarkingTempSegment
+    PlacedEllipse,
+    PlacedPathSegment,
+    PlacedPointEnd, PlacedPointMiddle, PlacedPointStart, PlacedPointUnfinished,
+    PlacedPolygon, PlacedPolygonBorder, PlacedPolygonBorderCrossed,
+    PlacedRect,
+    TempEllipse,
+    TempPathSegment,
+    TempPoint,
+    TempPolygon, TempPolygonBorder,
+    TempRect
 } from "./MarkingGraphics"
 
-export abstract class MarkingGraphicsGroup {
+export enum MarkingGraphicsType {
+    Temp,
+    Placed,
+    Confirmed,
+}
 
+export abstract class MarkingGraphicsGroup {
     protected abstract get graphics(): MarkerGraphics[]
     private storedGraphics?: MarkerGraphics[]
     private get initedGraphics(): MarkerGraphics[] {
@@ -44,7 +43,7 @@ export abstract class MarkingGraphicsGroup {
 
 class TempPointGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
-        return this.vectors.map(v => new MarkingPointTemp(v))
+        return this.vectors.map(v => new TempPoint(v))
     }
 }
 
@@ -52,18 +51,18 @@ class TempPathGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
         return v.length === 0 ? [] :
-            v.length === 1 ? [new MarkingPointTemp(v[0])] :
-                [new MarkingTempSegment(...v.slice(-2) as [PlaneVector, PlaneVector])]
+            v.length === 1 ? [new TempPoint(v[0])] :
+                [new TempPathSegment(...v.slice(-2) as [PlaneVector, PlaneVector])]
     }
 }
 
 class TempRectGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
-        return v.length <= 1 ? v.map(v => new MarkingPointTemp(v)) : [
-            new MarkingPointTemp(v[0]),
-            new MarkingPointTemp(v[1]),
-            new MarkingRectTemp(v[0], v[1]),
+        return v.length <= 1 ? v.map(v => new TempPoint(v)) : [
+            new TempPoint(v[0]),
+            new TempPoint(v[1]),
+            new TempRect(v[0], v[1]),
         ]
     }
 }
@@ -73,11 +72,11 @@ class TempPolygonGraphicGroup extends MarkingGraphicsGroup {
         const v = this.vectors
         const closingIntersect = v.length >= 4 && segmentIntersectPath([v[0], v[v.length - 1]], v) !== -1
         const res: MarkerGraphics[] = []
-        if (v.length === 1) res.push(new MarkingPointTemp(v[0]))
+        if (v.length === 1) res.push(new TempPoint(v[0]))
         else {
-            res.push(new MarkingPolygonBorderTemp(v[v.length - 2], v[v.length - 1]))
-            res.push(new MarkingPolygonTemp(v))
-            if (closingIntersect) res.push(new MarkingPolygonBorderCrossed(v[0], v[v.length - 1]))
+            res.push(new TempPolygonBorder(v[v.length - 2], v[v.length - 1]))
+            res.push(new TempPolygon(v))
+            if (closingIntersect) res.push(new PlacedPolygonBorderCrossed(v[0], v[v.length - 1]))
         }
         return res
     }
@@ -86,10 +85,10 @@ class TempPolygonGraphicGroup extends MarkingGraphicsGroup {
 class TempEllipseGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
-        return v.length <= 1 ? v.map(v => new MarkingPointTemp(v)) : [
-            new MarkingPointTemp(v[0]),
-            new MarkingPointTemp(v[1]),
-            new MarkingEllipseTemp(v[0], v[1]),
+        return v.length <= 1 ? v.map(v => new TempPoint(v)) : [
+            new TempPoint(v[0]),
+            new TempPoint(v[1]),
+            new TempEllipse(v[0], v[1]),
         ]
     }
 }
@@ -97,7 +96,7 @@ class TempEllipseGraphicGroup extends MarkingGraphicsGroup {
 class PlacedPointGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
-        return v.map(v => new MarkingPointEnd(v))
+        return v.map(v => new PlacedPointEnd(v))
     }
 }
 
@@ -105,12 +104,12 @@ class PlacedPathGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const res: MarkerGraphics[] = []
         this.vectors.forEach((v, idx, vectors) => {
-            if (idx === 0) res.push(new MarkingPointStart(v))
+            if (idx === 0) res.push(new PlacedPointStart(v))
             else {
-                res.push(new MarkingPathSegment(v, vectors[idx - 1]))
+                res.push(new PlacedPathSegment(v, vectors[idx - 1]))
                 res.push(idx === vectors.length - 1 ?
-                    new MarkingPointEnd(v) :
-                    new MarkingPointMiddle(v, idx))
+                    new PlacedPointEnd(v) :
+                    new PlacedPointMiddle(v, idx))
             }
         })
         return res
@@ -121,11 +120,11 @@ class PlacedRectGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
         switch (v.length) {
-            case 1: return [new MarkingPointStart(v[0])]
+            case 1: return [new PlacedPointStart(v[0])]
             case 2: return [
-                new MarkingPointStart(v[0]),
-                new MarkingRectPlaced(v[0], v[1]),
-                new MarkingPointEnd(v[1]),
+                new PlacedPointStart(v[0]),
+                new PlacedRect(v[0], v[1]),
+                new PlacedPointEnd(v[1]),
             ]
             default: return []
         }
@@ -138,20 +137,20 @@ class PlacedPolygonGraphicGroup extends MarkingGraphicsGroup {
         const closingIntersect = v.length >= 4 && segmentIntersectPath([v[0], v[v.length - 1]], v) !== -1
         const res: MarkerGraphics[] = []
         v.forEach((v, idx, vectors) => {
-            if (idx === 0) res.push(new MarkingPointStart(v))
+            if (idx === 0) res.push(new PlacedPointStart(v))
             else {
-                res.push(new MarkingPolygonBorder(v, vectors[idx - 1]))
+                res.push(new PlacedPolygonBorder(v, vectors[idx - 1]))
                 res.push(idx === vectors.length - 1 ?
                     closingIntersect ?
-                        new MarkingPointUnfinished(v) :
-                        new MarkingPointEnd(v) :
-                    new MarkingPointMiddle(v, idx))
+                        new PlacedPointUnfinished(v) :
+                        new PlacedPointEnd(v) :
+                    new PlacedPointMiddle(v, idx))
             }
         })
         if (closingIntersect)
-            res.push(new MarkingPolygonBorderCrossed(v[0], v[v.length - 1]))
+            res.push(new PlacedPolygonBorderCrossed(v[0], v[v.length - 1]))
         else if (v.length > 2)
-            res.push(new MarkingPolygonPlaced(v))
+            res.push(new PlacedPolygon(v))
         return res
     }
 }
@@ -159,26 +158,114 @@ class PlacedPolygonGraphicGroup extends MarkingGraphicsGroup {
 class PlacedEllipseGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
-        return v.length <= 1 ? v.map(v => new MarkingPointMiddle(v)) : [
-            new MarkingPointMiddle(v[0]),
-            new MarkingPointMiddle(v[1]),
-            new MarkingEllipsePlaced(v[0], v[1]),
+        return v.length <= 1 ? v.map(v => new PlacedPointStart(v)) : [
+            new PlacedPointStart(v[0]),
+            new PlacedPointEnd(v[1]),
+            new PlacedEllipse(v[0], v[1]),
         ]
     }
 }
 
-export const mapToMarkingGraphicGroup: (isTemp?: boolean) => (ob: Observable<PlaneVector[]>) => Observable<MarkingGraphicsGroup>
-    = isTemp => ob => ob.pipe(
+class ConfirmedPointGraphicGroup extends MarkingGraphicsGroup {
+    get graphics() {
+        const v = this.vectors
+        return v.map(v => new PlacedPointEnd(v))
+    }
+}
+
+class ConfirmedPathGraphicGroup extends MarkingGraphicsGroup {
+    get graphics() {
+        const res: MarkerGraphics[] = []
+        this.vectors.forEach((v, idx, vectors) => {
+            if (idx === 0) res.push(new PlacedPointStart(v))
+            else {
+                res.push(new PlacedPathSegment(v, vectors[idx - 1]))
+                res.push(idx === vectors.length - 1 ?
+                    new PlacedPointEnd(v) :
+                    new PlacedPointMiddle(v, idx))
+            }
+        })
+        return res
+    }
+}
+
+class ConfirmedRectGraphicGroup extends MarkingGraphicsGroup {
+    get graphics() {
+        const v = this.vectors
+        switch (v.length) {
+            case 1: return [new PlacedPointStart(v[0])]
+            case 2: return [
+                new PlacedPointStart(v[0]),
+                new PlacedRect(v[0], v[1]),
+                new PlacedPointEnd(v[1]),
+            ]
+            default: return []
+        }
+    }
+}
+
+class ConfirmedPolygonGraphicGroup extends MarkingGraphicsGroup {
+    get graphics() {
+        const v = this.vectors
+        const closingIntersect = v.length >= 4 && segmentIntersectPath([v[0], v[v.length - 1]], v) !== -1
+        const res: MarkerGraphics[] = []
+        v.forEach((v, idx, vectors) => {
+            if (idx === 0) res.push(new PlacedPointStart(v))
+            else {
+                res.push(new PlacedPolygonBorder(v, vectors[idx - 1]))
+                res.push(idx === vectors.length - 1 ?
+                    closingIntersect ?
+                        new PlacedPointUnfinished(v) :
+                        new PlacedPointEnd(v) :
+                    new PlacedPointMiddle(v, idx))
+            }
+        })
+        if (closingIntersect)
+            res.push(new PlacedPolygonBorderCrossed(v[0], v[v.length - 1]))
+        else if (v.length > 2)
+            res.push(new PlacedPolygon(v))
+        return res
+    }
+}
+
+class ConfirmedEllipseGraphicGroup extends MarkingGraphicsGroup {
+    get graphics() {
+        const v = this.vectors
+        return v.length <= 1 ? v.map(v => new PlacedPointStart(v)) : [
+            new PlacedPointStart(v[0]),
+            new PlacedPointEnd(v[1]),
+            new PlacedEllipse(v[0], v[1]),
+        ]
+    }
+}
+
+export const mapToMarkingGraphicGroup: (type: MarkingGraphicsType) => (ob: Observable<PlaneVector[]>) => Observable<MarkingGraphicsGroup>
+    = type => ob => ob.pipe(
         withLatestFrom(markingMode$.pipe(map(mode => {
-            switch (mode) {
-                case MapMarkingMode.Path: return isTemp ? TempPathGraphicGroup : PlacedPathGraphicGroup
-                case MapMarkingMode.Rect: return isTemp ? TempRectGraphicGroup : PlacedRectGraphicGroup
-                case MapMarkingMode.Polygon: return isTemp ? TempPolygonGraphicGroup : PlacedPolygonGraphicGroup
-                case MapMarkingMode.Ellipse: return isTemp ? TempEllipseGraphicGroup : PlacedEllipseGraphicGroup
-                default: return isTemp ? TempPointGraphicGroup : PlacedPointGraphicGroup
+            switch (type) {
+                case MarkingGraphicsType.Temp: switch (mode) {
+                    case MapMarkingMode.Path: return TempPathGraphicGroup
+                    case MapMarkingMode.Rect: return TempRectGraphicGroup
+                    case MapMarkingMode.Polygon: return TempPolygonGraphicGroup
+                    case MapMarkingMode.Ellipse: return TempEllipseGraphicGroup
+                    default: return TempPointGraphicGroup
+                }
+                case MarkingGraphicsType.Placed: switch (mode) {
+                    case MapMarkingMode.Path: return PlacedPathGraphicGroup
+                    case MapMarkingMode.Rect: return PlacedRectGraphicGroup
+                    case MapMarkingMode.Polygon: return PlacedPolygonGraphicGroup
+                    case MapMarkingMode.Ellipse: return PlacedEllipseGraphicGroup
+                    default: return PlacedPointGraphicGroup
+                }
+                default: switch (mode) {
+                    case MapMarkingMode.Path: return ConfirmedPathGraphicGroup
+                    case MapMarkingMode.Rect: return ConfirmedRectGraphicGroup
+                    case MapMarkingMode.Polygon: return ConfirmedPolygonGraphicGroup
+                    case MapMarkingMode.Ellipse: return ConfirmedEllipseGraphicGroup
+                    default: return ConfirmedPointGraphicGroup
+                }
             }
         }))),
         map(([vectors, Group]) => new Group(vectors))
     )
-
 
