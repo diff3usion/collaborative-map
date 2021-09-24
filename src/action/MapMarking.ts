@@ -1,14 +1,22 @@
-import { distinctUntilChanged, map, tap, window, withLatestFrom, startWith, of, switchMap, merge, share, scan, Observable, mapTo } from "rxjs";
+import { distinctUntilChanged, map, tap, withLatestFrom, of, merge, share, scan, mapTo, OperatorFunction, MonoTypeOperatorFunction } from "rxjs";
 import { markingTypeDropdownKeyMap } from "../Constant";
 import { markingTypeControlSelectedOption$ } from "../intent/Control";
+import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../intent/Map";
 import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
-import { mapToRelativePosition, viewport$, viewportFocusRect, viewportUpdateObserver } from "../store/Map";
+import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, viewportFocusRect, viewportUpdateObserver } from "../store/Map";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
-import { EventButtonType, MapMarkingStage, PlaneVector, ViewportUpdate } from "../Type";
-import { eventToGlobalPosition, eventToTargetRelativePosition } from "../utils";
-import { planeVectorsFitRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
-import { distinctPlaneVector, filterEventButton, switchToLastestFrom } from "../utils/rx";
-import { mainButtonDownOnBackground$, mainButtonDownAndMove$, mainButtonUpOnBackground$ } from "./Pointer";
+import { MapMarkingStage, PlaneVector, ViewportUpdate } from "../Type";
+import { eventToPosition, eventToTargetRelativePosition } from "../utils";
+import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
+import { distinctPlaneVector, switchToLastestFrom, windowEachStartWith } from "../utils/rx";
+
+function filterMayDrawNewPoint<T>(): MonoTypeOperatorFunction<T> {
+    return ob => ob.pipe(
+        filterIsMarkingMode(),
+        filterIsDrawingStage(),
+        filterCanPlaceMorePoints(),
+    )
+}
 
 markingTypeControlSelectedOption$
     .pipe(
@@ -18,19 +26,23 @@ markingTypeControlSelectedOption$
     .subscribe(markingMode$)
 
 //#region New Temp Point
-const newTempPointEvent$ =
-    merge(
-        mainButtonDownOnBackground$,
-        mainButtonDownAndMove$,
-    ).pipe(
-        filterIsMarkingMode(),
-        filterIsDrawingStage(),
-        filterCanPlaceMorePoints(),
-    )
-
-newTempPointEvent$
+const newTempPointEvent$ = canvasPointerDown$
     .pipe(
-        map(eventToGlobalPosition),
+        filterMayDrawNewPoint(),
+    )
+const tempPointMoveEvent$ = canvasPointerMove$
+    .pipe(
+        filterSinglePointerIsDown(),
+        filterMayDrawNewPoint(),
+    )
+const tempPointUpdateEvent$ =
+    merge(
+        tempPointMoveEvent$,
+        newTempPointEvent$,
+    )
+tempPointUpdateEvent$
+    .pipe(
+        map(eventToPosition),
         mapToRelativePosition(),
         map(vectorRound),
         distinctPlaneVector(),
@@ -46,47 +58,41 @@ enum MarkingActionType {
     Delete,
 }
 const clearAction = () => [[0, 0], MarkingActionType.Clear] as MarkingAction
-const mapToAction: (type: MarkingActionType) => (ob: Observable<PlaneVector>) => Observable<MarkingAction>
-    = type => ob => ob.pipe(map(v => [v, type]))
-const applyMarkingAction: (vectors: PlaneVector[], current: MarkingAction) => PlaneVector[]
-    = (vectors, [target, actionType]) => {
-        switch (actionType) {
-            case MarkingActionType.Add:
-                return [...vectors, target]
-            case MarkingActionType.Delete:
-                console.log(target, vectors)
-                return vectors.filter(([x, y]) => target[0] !== x || target[1] !== y)
-            default:
-                return []
-        }
+function mapToAction(type: MarkingActionType): OperatorFunction<PlaneVector, MarkingAction> {
+    return ob => ob.pipe(map(v => [v, type]))
+}
+function applyMarkingAction(vectors: PlaneVector[], [target, actionType]: MarkingAction): PlaneVector[] {
+    switch (actionType) {
+        case MarkingActionType.Add:
+            return [...vectors, target]
+        case MarkingActionType.Delete:
+            console.log(target, vectors)
+            return vectors.filter(([x, y]) => target[0] !== x || target[1] !== y)
+        default:
+            return []
     }
+}
 
-const mainButtonUpTempPoint$ = tempPointPointerUp$
-    .pipe(
-        filterEventButton(EventButtonType.Main),
-    )
 const addPlacedPointEvent$ =
     merge(
-        mainButtonUpOnBackground$,
-        mainButtonUpTempPoint$,
+        canvasPointerUp$,
+        tempPointPointerUp$,
     ).pipe(
-        filterIsMarkingMode(),
-        filterIsDrawingStage(),
-        filterCanPlaceMorePoints(),
-        switchToLastestFrom(newTempPointEvent$),
+        filterMayDrawNewPoint(),
+        switchToLastestFrom(tempPointUpdateEvent$),
     )
-const addAction$ = addPlacedPointEvent$.pipe(
-    map(eventToGlobalPosition),
-    mapToRelativePosition(),
-    map(vectorRound),
-    window(markingMode$),
-    switchMap(ob => ob.pipe(mapToAction(MarkingActionType.Add), startWith(clearAction()))),
-)
+const addAction$ = addPlacedPointEvent$
+    .pipe(
+        map(eventToPosition),
+        mapToRelativePosition(),
+        map(vectorRound),
+        mapToAction(MarkingActionType.Add),
+        windowEachStartWith(markingMode$, clearAction()),
+    )
 const deletePlacedPointEvent$ = placedPointPointerUp$
     .pipe(
         filterIsMarkingMode(),
         filterIsDrawingStage(),
-        filterEventButton(EventButtonType.Secondary),
     )
 const deleteAction$ = deletePlacedPointEvent$
     .pipe(
@@ -100,31 +106,39 @@ const deleteAction$ = deletePlacedPointEvent$
 merge(
     addAction$,
     deleteAction$,
-).pipe(
-    scan(applyMarkingAction, []),
-).subscribe(placedPoints$)
+)
+    .pipe(
+        scan(applyMarkingAction, []),
+    ).subscribe(placedPoints$)
 //#endregion
 
 
 //#region Marking End
-const markingEndEvent$ = endPointPointerUp$.pipe(
-    filterIsMarkingMode(),
-    // filterIsDrawingStage(),
-)
-markingEndEvent$.pipe(
-    switchToLastestFrom(placedPoints$),
-).subscribe(confirmedPoints$)
+const markingEndEvent$ = endPointPointerUp$
+    .pipe(
+        filterIsMarkingMode(),
+        // filterIsDrawingStage(),
+    )
+markingEndEvent$
+    .pipe(
+        switchToLastestFrom(placedPoints$),
+    )
+    .subscribe(confirmedPoints$)
 
-confirmedPoints$.pipe(
-    mapTo(MapMarkingStage.Specifying),
-).subscribe(markingStage$)
+confirmedPoints$
+    .pipe(
+        mapTo(MapMarkingStage.Specifying),
+    )
+    .subscribe(markingStage$)
 
-confirmedPoints$.pipe(
-    map(vectors => {
-        const fitted = planeVectorsFitRect(vectors)
-        return scaleRectWithMinSize(fitted, 1.2, rectCenter(fitted), 16)
-    }),
-    viewportFocusRect(),
-    map(viewport => ({ viewport, animated: true }) as ViewportUpdate),
-).subscribe(viewportUpdateObserver)
+confirmedPoints$
+    .pipe(
+        map(vectors => {
+            const fitted = planeVectorsBoundingRect(vectors)
+            return scaleRectWithMinSize(fitted, 1.2, rectCenter(fitted), 16)
+        }),
+        viewportFocusRect(),
+        map(viewport => ({ viewport, animation: { duration: 200 } }) as ViewportUpdate),
+    )
+    .subscribe(viewportUpdateObserver)
 //#endregion

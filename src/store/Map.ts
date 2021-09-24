@@ -1,54 +1,69 @@
-import { BehaviorSubject, distinctUntilChanged, filter, map, Observable, Observer, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
+import { BehaviorSubject, distinctUntilChanged, map, MonoTypeOperatorFunction, Observer, OperatorFunction, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
 
 import { EventButtonType, PlaneRect, PlaneVector, Viewport, ViewportUpdate } from "../Type"
-import { distinctPlaneVector } from "../utils/rx"
+import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils"
 import { mainPanelSize$ } from "../intent/MainPanel"
-import { divideRectByHalf, planeVectorsFitRect, rectCenter, scaleRectWithMinSize, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
+import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
 
-const viewportUpdateSubject = new BehaviorSubject<ViewportUpdate>({ viewport: { position: [0, 0], scale: 1 }, animated: false })
+const viewportUpdateSubject = new BehaviorSubject<ViewportUpdate>({ viewport: { position: [0, 0], scale: 1 } })
 export const viewportUpdateObserver: Observer<ViewportUpdate> = viewportUpdateSubject
-export const viewportUpdate$ = viewportUpdateSubject.pipe(
-    shareReplay(1)
-)
+export const viewportUpdate$ = viewportUpdateSubject
+    .pipe(
+        shareReplay(1)
+    )
 
 export const viewport$ = viewportUpdate$.pipe(map(({ viewport }) => viewport))
 
-export const position$ = viewport$.pipe(
-    map(({ position }) => position),
-    distinctPlaneVector(),
-)
-export const scale$ = viewport$.pipe(
-    map(({ scale }) => scale),
-    distinctUntilChanged(),
-)
-export const rendererPointerIsDown$ = new BehaviorSubject<EventButtonType>(EventButtonType.None)
+export const position$ = viewport$
+    .pipe(
+        map(({ position }) => position),
+        distinctPlaneVector(),
+    )
+export const scale$ = viewport$
+    .pipe(
+        map(({ scale }) => scale),
+        distinctUntilChanged(),
+    )
+export const canvasPointersCurrentlyDown$ = new BehaviorSubject<PointerEvent[]>([])
+export const canvasSinglePointerDown$ = canvasPointersCurrentlyDown$
+    .pipe(
+        map(down => down.length === 1 ? down[0] : undefined)
+    )
 
 export const rendererCursorStyle$ = new BehaviorSubject<string>('grab')
 export const cursorRelativePosition$ = new BehaviorSubject<PlaneVector>([0, 0])
 export const cursorRoundedRelativePosition$ = new BehaviorSubject<PlaneVector>([0, 0])
 
-
-export const filterPointerIsDown: <T>(...acceptable: EventButtonType[]) => (ob: Observable<T>) => Observable<T>
-    = (...acceptable) => ob => ob.pipe(
-        withLatestFrom(rendererPointerIsDown$),
-        filter(([_, currentIsDown]) => acceptable.includes(currentIsDown)),
-        map(([v]) => v)
+export function filterSinglePointerIsDown<T>(...acceptable: EventButtonType[]): MonoTypeOperatorFunction<T> {
+    return filterWithLatestFrom(
+        canvasSinglePointerDown$,
+        down => down !== undefined && (!acceptable.length || acceptable.includes(down.button))
     )
+}
 
-export const mapToRelativePosition: () => (ob: Observable<PlaneVector>) => Observable<PlaneVector>
-    = () => ob => ob.pipe(
+export function filterPointerDownCount<T>(count: number): MonoTypeOperatorFunction<T> {
+    return filterWithLatestFrom(
+        canvasPointersCurrentlyDown$,
+        c => c.length === count
+    )
+}
+
+export function mapToRelativePosition(): MonoTypeOperatorFunction<PlaneVector> {
+    return ob => ob.pipe(
         withLatestFrom(viewport$),
         map(args => globalToRelativePosition(...args)),
     )
-export const mapToGlobalPosition: () => (ob: Observable<PlaneVector>) => Observable<PlaneVector>
-    = () => ob => ob.pipe(
+}
+export function mapToGlobalPosition(): MonoTypeOperatorFunction<PlaneVector> {
+    return ob => ob.pipe(
         withLatestFrom(viewport$),
         map(args => relativeToGlobalPosition(...args)),
     )
+}
 
-export const viewportFocusRect: () => (ob: Observable<PlaneRect>) => Observable<Viewport>
-    = () => ob => ob.pipe(
+export function viewportFocusRect(): OperatorFunction<PlaneRect, Viewport> {
+    return ob => ob.pipe(
         withLatestFrom(viewport$, mainPanelSize$),
         map(([rect, viewport, size]) => {
             const globalRect = [relativeToGlobalPosition(rect[0], viewport), vectorTimes(viewport.scale, rect[1])] as PlaneRect
@@ -61,4 +76,4 @@ export const viewportFocusRect: () => (ob: Observable<PlaneRect>) => Observable<
             }
         })
     )
-
+}

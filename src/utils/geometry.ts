@@ -7,31 +7,43 @@ export const initMatrix = init2dArray as <T, R extends number, C extends number>
 export const mapMatrix = map2dArray as <T, R extends number, C extends number>(m: MatrixOf<T, R, C>, producer: (val: T, row: number, col: number) => T) => MatrixOf<T, R, C>
 
 export function vectorFlip<V extends NumTuple<number>>(vector: V): V {
-    return vector.map((_, i) => vector[vector.length - 1 - i]) as V
+    return [...vector].reverse() as V
 }
 export function vectorRound<V extends NumTuple<number>>(vector: V): V {
     return vector.map(Math.round) as V
 }
-export function vectorAdd<V extends NumTuple<number>>(...vectors: V[]): V {
-    return vectors.splice(1).reduce((sum, v) => v.map((n, i) => sum[i] + n) as V, vectors[0])
-}
-export function vectorMinus<V extends NumTuple<number>>(...vectors: V[]): V {
-    return vectors.splice(1).reduce((res, v) => v.map((n, i) => res[i] - n) as V, vectors[0])
-}
 export function vectorAbs<V extends NumTuple<number>>(vector: V): V {
     return vector.map(Math.abs) as V
 }
-export function vectorAbsMinus<V extends NumTuple<number>>(...vectors: V[]): V {
-    return vectorAbs(vectorMinus(...vectors))
+export function vectorBounded<V extends NumTuple<number>>(lower: number, upper: number, vector: V): V {
+    return vector.map(v => boundedNumber(lower, upper, v)) as V
+}
+export function vectorPlus<V extends NumTuple<number>>(v0: V, ...vectors: V[]): V {
+    return vectors.reduce((sum, v) => v.map((n, i) => sum[i] + n) as V, v0)
+}
+export function vectorMinus<V extends NumTuple<number>>(v0: V, ...vectors: V[]): V {
+    return vectors.reduce((res, v) => v.map((n, i) => res[i] - n) as V, v0)
+}
+export function vectorAdd<V extends NumTuple<number>>(scaler: number, vector: V): V {
+    return vector.map(n => n + scaler) as V
+}
+export function vectorSubtract<V extends NumTuple<number>>(scaler: number, vector: V): V {
+    return vector.map(n => n - scaler) as V
 }
 export function vectorTimes<V extends NumTuple<number>>(multiplier: number, vector: V): V {
     return vector.map(n => n * multiplier) as V
 }
+export function vectorDivide<V extends NumTuple<number>>(divisor: number, vector: V): V {
+    return vector.map(n => n / divisor) as V
+}
+export function vectorMean<V extends NumTuple<number>>(v0: V, ...vectors: V[]): V {
+    return vectors.reduce((m, v, n) => vectorPlus(m, vectorDivide(n + 1, vectorMinus(v, m)), v0))
+}
+export function vectorNorm<V extends NumTuple<number>>(v0: V): number {
+    return Math.sqrt(v0.reduce((sum, n) => sum + n * n, 0))
+}
 export function vectorDist<V extends NumTuple<number>>(v0: V, v1: V): number {
     return Math.sqrt(v0.reduce((sum, n, idx) => sum + Math.pow(n - v1[idx], 2), 0))
-}
-export function vectorBounded<V extends NumTuple<number>>(lower: number, upper: number, vector: V): V {
-    return vector.map(v => boundedNumber(lower, upper, v)) as V
 }
 
 export const threePointsCCW: (p0: PlaneVector, p1: PlaneVector, p2: PlaneVector) => boolean
@@ -77,12 +89,12 @@ export const positionUnshift: (n: number, isHorizontal: boolean, viewport: Viewp
     = (n, isHorizontal, { position: [x, y], scale }) => (n - (isHorizontal ? y : x)) / scale
 
 export const planeVectorShift: (v: PlaneVector, viewport: Viewport) => PlaneVector
-    = (v, { position, scale }) => vectorAdd(vectorTimes(scale, v), position)
+    = (v, { position, scale }) => vectorPlus(vectorTimes(scale, v), position)
 
 export const planeVectorUnshift: (v: PlaneVector, viewport: Viewport) => PlaneVector
     = (v, { position, scale }) => vectorTimes(1 / scale, vectorMinus(v, position))
 
-export const planeVectorsFitRect: (vectors: PlaneVector[]) => PlaneRect
+export const planeVectorsBoundingRect: (vectors: PlaneVector[]) => PlaneRect
     = vectors => {
         const res = vectors.reduce<NumMatrix<2, 2>>((prev, curr) =>
             mapMatrix<number, 2, 2>(prev, (val, row, col) => (row ? Math.max : Math.min)(val, curr[col])),

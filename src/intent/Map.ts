@@ -1,20 +1,27 @@
-import { InteractionEvent } from "pixi.js"
-import { Observer, throttleTime, share, Subject, tap } from "rxjs"
+import { Subject } from "rxjs"
+import { EventButtonType } from "../Type"
+import { filterEventButton } from "../utils/rx"
 
-const canvasContextMenuSubject = new Subject<MouseEvent>()
-export const canvasContextMenuObserver: Observer<MouseEvent> = canvasContextMenuSubject
-canvasContextMenuSubject.subscribe(e => e.preventDefault())
-export const canvasContextMenu$ = canvasContextMenuSubject
+export const canvasContextMenu$ = new Subject<MouseEvent>()
+export const canvasWheel$ = new Subject<WheelEvent>()
+export const canvasPointerMove$: Subject<PointerEvent> = new Subject()
+export const canvasPointerDown$: Subject<PointerEvent> = new Subject()
+export const canvasPointerUp$: Subject<PointerEvent> = new Subject()
+export const canvasPointerUpOutside$ = new Subject<PointerEvent>()
 
-const canvasWheelSubject = new Subject<WheelEvent>()
-export const canvasWheelObserver: Observer<WheelEvent> = canvasWheelSubject
-canvasWheelSubject.subscribe(e => e.preventDefault())
-export const canvasWheel$ = canvasWheelSubject.pipe(
-    throttleTime(100),
-)
+export const canvasMainPointerMove$ = canvasPointerMove$
+    .pipe(
+        filterEventButton(EventButtonType.Main)
+    )
+export const mainButtonDown$ = canvasPointerDown$
+    .pipe(
+        filterEventButton(EventButtonType.Main),
+    )
+export const canvasMainPointerUp$ = canvasPointerUp$
+    .pipe(
+        filterEventButton(EventButtonType.Main)
+    )
 
-export const rendererPointerDown$: Subject<InteractionEvent> = new Subject()
-export const rendererPointerUp$: Subject<InteractionEvent> = new Subject()
-export const rendererPointerUpOutside$: Subject<InteractionEvent> = new Subject()
-export const rendererPointerMove$: Subject<InteractionEvent> = new Subject()
-
+canvasContextMenu$.subscribe(e => e.preventDefault())
+canvasWheel$.subscribe(e => e.preventDefault())
+canvasPointerUp$.subscribe(e => e.stopPropagation())

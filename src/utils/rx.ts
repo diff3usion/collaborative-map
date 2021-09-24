@@ -1,5 +1,5 @@
 import { InteractionEvent } from "pixi.js"
-import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, Subscription, withLatestFrom } from "rxjs"
+import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, startWith, Subject, Subscription, switchMap, window, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
 import { EventButtonType, PlaneVector, Viewport } from "../Type"
 
@@ -16,23 +16,39 @@ export const filterWithMultipleLatestFrom =
 
 export const filterThatLatestEquals = <F>(target$: Observable<F>) => (value: F) =>
     filterWithMultipleLatestFrom(target$)(([latest]) => latest === value)
-
-export function filterWithLatestFrom<T, F>(signal: Observable<T>, predicate: (v: F, s: T) => boolean): MonoTypeOperatorFunction<F> {
+export function filterWithLatestFrom<T, F>(
+    signal: Observable<T>,
+    predicate: (s: T, v: F) => boolean
+): MonoTypeOperatorFunction<F> {
     return ob => ob.pipe(
         withLatestFrom(signal),
-        filter(([v, s]) => predicate(v, s)),
+        filter(([v, s]) => predicate(s, v)),
         map(([v]) => v)
     )
 }
+export const filterByLatestSignal = <T>(signal: Observable<boolean>) =>
+    filterWithLatestFrom<boolean, T>(signal, s => s)
 
-export const filterByLatestBoolean = <T>(signal: Observable<boolean>) =>
-    filterWithLatestFrom(signal, (_: T, s: boolean) => s)
+export const filterByLatestSignalReversed = <T>(signal: Observable<boolean>) =>
+    filterWithLatestFrom<boolean, T>(signal, s => !s)
+
+export function partitionWithLatestFrom<T, F>(
+    ob: Observable<F>,
+    signal: Observable<T>,
+    predicate: (s: T, v: F) => boolean
+): [Observable<F>, Observable<F>] {
+    return partition(ob.pipe(withLatestFrom(signal)), ([v, s]) => predicate(s, v))
+        .map(branch => branch.pipe(map(([v]) => v))) as [Observable<F>, Observable<F>]
+}
 
 export const filterWithoutTarget = () => filter((e: InteractionEvent) => !e.currentTarget)
 export const filterWithTarget = () => filter((e: InteractionEvent) => e.currentTarget !== undefined && e.currentTarget !== null)
 
-export function filterEventButton(...acceptable: EventButtonType[]): MonoTypeOperatorFunction<InteractionEvent> {
-    return filter((e: InteractionEvent) => acceptable.includes(e.data.button))
+export function filterEventButton(...acceptable: EventButtonType[]): MonoTypeOperatorFunction<PointerEvent> {
+    return filter(e => acceptable.includes(e.button))
+}
+export function filterEventId(id: number): MonoTypeOperatorFunction<PointerEvent> {
+    return filter(e => id === e.pointerId)
 }
 
 export function distinctPlaneVector(): MonoTypeOperatorFunction<PlaneVector> {
@@ -43,19 +59,18 @@ export function distinctViewport(): MonoTypeOperatorFunction<Viewport> {
     return distinctUntilChanged<Viewport>(({ position: [prevX, prevY], scale: prevScale }, { position: [x, y], scale }) =>
         prevX === x && prevY === y && prevScale === scale)
 }
-export function pairwiseDeltaPlaneVector(): MonoTypeOperatorFunction<PlaneVector> {
-    return ob => ob.pipe(
-        pairwise(),
-        map(([[x0, y0], [x1, y1]]) => [x1 - x0, y1 - y0]),
-    )
-}
 export function switchToLastestFrom<T, F>(to: Observable<T>): OperatorFunction<F, T> {
     return from => from.pipe(
         withLatestFrom(to),
-        map(([_, v]) => v)
+        map(([_, v]) => v),
     )
 }
-
+export function mapToOnSignal<T>(to: T, signal: Observable<any>): MonoTypeOperatorFunction<T> {
+    return from => from.pipe(
+        withLatestFrom(signal),
+        mapTo(to),
+    )
+}
 export function mergeWithSignalAs<T, F, G>(signal: Observable<T>, target: F): MonoTypeOperatorFunction<F | G> {
     return mergeWith(signal.pipe(mapTo(target)))
 }
@@ -76,3 +91,18 @@ export const mapAndObserveWith = <T, F>(fn: (event: T) => F, observer: Observer<
 
 export const observeWith = <T>(observer: Observer<T>) =>
     (event: T) => observer.next(event)
+
+export function windowPairwise<T>(signal: Observable<any>): OperatorFunction<T, [T, T]> {
+    return ob => ob.pipe(
+        window(signal),
+        switchMap(ob => ob.pipe(
+            pairwise(),
+        )),
+    )
+}
+export function windowEachStartWith<T>(signal: Observable<any>, value: T): MonoTypeOperatorFunction<T> {
+    return ob => ob.pipe(
+        window(signal),
+        switchMap(startWith(value)),
+    )
+}

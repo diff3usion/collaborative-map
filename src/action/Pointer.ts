@@ -1,25 +1,18 @@
-import { rendererPointerDown$, rendererPointerMove$, rendererPointerUp$ } from "../intent/Map"
-import { filterPointerIsDown } from "../store/Map"
-import { EventButtonType } from "../Type"
+import { tap } from "rxjs"
+import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../intent/Map"
+import { filterSinglePointerIsDown } from "../store/Map"
+import { MouseButtons } from "../Type"
 import { filterWithoutTarget, filterEventButton } from "../utils/rx"
 
-export const mainButtonDown$ = rendererPointerDown$
+export const mainButtonDown$ = canvasPointerDown$
     .pipe(
-        filterEventButton(EventButtonType.Main),
+        filterEventButton(MouseButtons.Left),
     )
-export const mainButtonUp$ = rendererPointerUp$
+export const mainButtonUp$ = canvasPointerUp$
     .pipe(
-        filterEventButton(EventButtonType.Main),
+        filterEventButton(MouseButtons.Left),
     )
-export const mainButtonDownOnBackground$ = mainButtonDown$
+export const singleMainButtonDownAndMove$ = canvasPointerMove$
     .pipe(
-        filterWithoutTarget(),
-    )
-export const mainButtonUpOnBackground$ = mainButtonUp$
-    .pipe(
-        filterWithoutTarget(),
-    )
-export const mainButtonDownAndMove$ = rendererPointerMove$
-    .pipe(
-        filterPointerIsDown(EventButtonType.Main),
+        filterSinglePointerIsDown(MouseButtons.Left),
     )

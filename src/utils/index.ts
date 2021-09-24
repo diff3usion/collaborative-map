@@ -19,9 +19,10 @@ export const numberToBytes: (value: number, bytes: Uint8Array, index: number, si
 export const eventToClientPlaneVector: (event: { clientX: number, clientY: number }) => PlaneVector
     = e => [e.clientX, e.clientY]
 
-export const mouseEventToPlaneVector: (event: MouseEvent) => PlaneVector
+export const eventToPosition: (event: MouseEvent) => PlaneVector
     = e => {
-        if (isFirefox && e.target) {
+        if (e.offsetX) return [e.offsetX, e.offsetY]
+        if (e.target) {
             const target = e.target as HTMLElement
             var mozLeft = e.clientX - target.offsetLeft
             var mozTop = e.clientY - target.offsetTop
@@ -32,13 +33,12 @@ export const mouseEventToPlaneVector: (event: MouseEvent) => PlaneVector
                 parent = parent.offsetParent as HTMLElement
             }
             return [mozLeft, mozTop]
-        } else {
-            return [e.offsetX, e.offsetY]
         }
+        return [0, 0]
     }
 
-export const eventToGlobalPosition: (e: InteractionEvent) => PlaneVector
-    = ({ data: { global: { x, y } } }) => [x, y]
+// export const eventToGlobalPosition: (e: InteractionEvent) => PlaneVector
+//     = ({ data: { global: { x, y } } }) => [x, y]
 
 export const eventToTargetRelativePosition: (e: InteractionEvent) => PlaneVector
     = ({ currentTarget: { position: { x, y } } }) => [x, y]
@@ -57,4 +57,13 @@ export const nearestSmallerPowerOf2 = (n: number) =>
 export const pointToVector: (p: Point) => PlaneVector
     = p => [p.x, p.y]
 
-export const boundedNumber = (lower: number, upper: number, n: number) => Math.max(lower, Math.min(upper, n))
+export function boundedNumber(lower: number, upper: number, n: number): number {
+    return Math.max(lower, Math.min(upper, n))
+}
+
+export function pickProperties<T extends Object, F extends (keyof T)[]>(obj: T, ...keys: F): Pick<T, F[number]> {
+    return keys.reduce((a, x) => {
+        if (obj.hasOwnProperty(x)) a[x] = obj[x];
+        return a;
+    }, {} as Partial<T>) as Pick<T, F[number]>
+}

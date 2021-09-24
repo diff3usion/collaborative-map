@@ -17,7 +17,6 @@ export type GridUpdate = {
 export class Grid {
     private horizLines: GridLineMap = new RecordedMap()
     private vertiLines: GridLineMap = new RecordedMap()
-
     private sizeToGridLineGap(
         size: PlaneVector,
         scale: number
@@ -28,7 +27,6 @@ export class Grid {
             Math.min(...size.map(s => nearestSmallerPowerOf2(s / scale / this.desiredLineCount)))
         )
     }
-
     private gridPositions(
         delta: number,
         length: number,
@@ -39,7 +37,6 @@ export class Grid {
         const count = Math.ceil(Math.floor(length / scale - (start - delta / scale)) / gap)
         return initArray(count, idx => start + idx * gap)
     }
-
     private updateGridLines(
         isHorizontal: boolean,
         lines: GridLineMap,
@@ -69,15 +66,17 @@ export class Grid {
         public maxLineGap = 1024,
     ) { }
 
-    public update: (size: PlaneVector, viewport: Viewport) => [GridUpdate, GridUpdate]
-        = ([width, height], viewport) => {
-            const { position: [x, y], scale } = viewport
-            const gap = this.sizeToGridLineGap([width, height], scale)
-            const horizPositions = this.gridPositions(-y, height, gap, scale)
-            const vertiPositions = this.gridPositions(-x, width, gap, scale)
-            return [
-                this.updateGridLines(true, this.horizLines, viewport, horizPositions, width),
-                this.updateGridLines(false, this.vertiLines, viewport, vertiPositions, height),
-            ]
-        }
+    public update(
+        [width, height]: PlaneVector,
+        viewport: Viewport
+    ): [GridUpdate, GridUpdate] {
+        const { position: [x, y], scale } = viewport
+        const gap = this.sizeToGridLineGap([width, height], scale)
+        const horizPositions = this.gridPositions(-y, height, gap, scale)
+        const vertiPositions = this.gridPositions(-x, width, gap, scale)
+        return [
+            this.updateGridLines(true, this.horizLines, viewport, horizPositions, width),
+            this.updateGridLines(false, this.vertiLines, viewport, vertiPositions, height),
+        ]
+    }
 }

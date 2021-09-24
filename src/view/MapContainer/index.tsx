@@ -8,12 +8,11 @@ import { mainPanelSize$ } from "../../intent/MainPanel"
 import { useEventObserver } from '../../utils/hook'
 import { rendererCursorStyle$ } from "../../store/Map"
 import {
-    canvasContextMenuObserver,
-    canvasWheelObserver,
-    rendererPointerDown$,
-    rendererPointerMove$,
-    rendererPointerUp$,
-    rendererPointerUpOutside$
+    canvasContextMenu$,
+    canvasWheel$,
+    canvasPointerDown$,
+    canvasPointerMove$,
+    canvasPointerUp$,
 } from "../../intent/Map"
 import { markingContainer } from "./marker/Marking"
 import { mapContainer } from "./Map"
@@ -57,12 +56,11 @@ export const MapContainer = () => {
     const mapCanvas = useRef<HTMLCanvasElement>(mapApp.view)
     const container = useRef<HTMLDivElement>(null)
 
-    useEventObserver(mapApp.view, 'contextmenu', canvasContextMenuObserver)
-    useEventObserver(mapApp.view, 'wheel', canvasWheelObserver)
-    useEventObserver(mapRendererInteraction, 'pointerdown', rendererPointerDown$)
-    useEventObserver(mapRendererInteraction, 'pointerup', rendererPointerUp$)
-    useEventObserver(mapRendererInteraction, 'pointerupoutside', rendererPointerUpOutside$)
-    useEventObserver(mapRendererInteraction, 'pointermove', rendererPointerMove$)
+    useEventObserver(mapApp.view, 'contextmenu', canvasContextMenu$)
+    useEventObserver(mapApp.view, 'wheel', canvasWheel$)
+    useEventObserver(mapApp.view, 'pointermove', canvasPointerMove$)
+    useEventObserver(mapApp.view, 'pointerdown', canvasPointerDown$)
+    useEventObserver(mapApp.view, 'pointerup', canvasPointerUp$)
 
     useEffect(() => {
         container.current!.appendChild(mapCanvas.current)
@@ -72,4 +70,3 @@ export const MapContainer = () => {
         <div id="map-container" ref={container} />
     )
 }
-

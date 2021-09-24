@@ -2,7 +2,7 @@ import { Graphics, Text, Point, Ticker } from "pixi.js"
 import { Observable, Observer, Subscription } from "rxjs"
 import { markingContainer } from "./Marking"
 import { PlaneVector, Viewport } from "../../../Type"
-import { planeVectorShift, vectorAbsMinus, vectorMinus } from "../../../utils/geometry"
+import { planeVectorShift, vectorAbs, vectorMinus } from "../../../utils/geometry"
 import { viewportUpdate$ } from "../../../store/Map"
 import { TransitionTicker } from "../../../utils/animation"
 import { vectorArrayTransition, linear } from "../../../utils/transition"
@@ -77,9 +77,9 @@ export abstract class MarkerGraphics {
     }
     protected constructor(...vectors: PlaneVector[]) {
         this.vectors = vectors
-        this.observe(viewportUpdate$, ({ viewport, animated }) => {
+        this.observe(viewportUpdate$, ({ viewport, animation }) => {
             this.viewport = viewport
-            const from = animated && this.shiftedVectors ? this.shiftedVectors : undefined
+            const from = animation && this.shiftedVectors ? this.shiftedVectors : undefined
             this.shiftedVectors = vectors.map(v => this.shift(v))
             this.move(from)
         })
@@ -204,7 +204,7 @@ export class EllipseMarker extends MarkerGraphics implements MarkerOptions {
         this.g
             .clear()
             .beginFill(0xAAAAAA)
-            .drawEllipse(0, 0, ...vectorAbsMinus(center, p))
+            .drawEllipse(0, 0, ...vectorAbs(vectorMinus(center, p)))
             .endFill()
     }
     protected constructor(center: PlaneVector, p: PlaneVector, init?: MarkerOptions) {

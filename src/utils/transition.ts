@@ -1,32 +1,34 @@
 import { boundedNumber } from "."
-import { NumTuple } from "../Type"
+import { AnimationOptions, NumTuple } from "../Type"
 
 export type TransitionFunction<T> = (from: T, to: T, t: number) => T
 
 export const linear = (from: number, to: number, t: number) =>
     from + (to - from) * boundedNumber(0, 1, t)
 
-export function vectorTransition<V extends NumTuple<number>>(transition: TransitionFunction<number>): TransitionFunction<V> {
-    return (from: V, to: V, t: number) => from.map((n, i) => transition(n, to[i], t)) as V
+export function vectorTransition<V extends NumTuple<number>>(fn: TransitionFunction<number>): TransitionFunction<V> {
+    return (from: V, to: V, t: number) => from.map((n, i) => fn(n, to[i], t)) as V
 }
 
-export function vectorArrayTransition<V extends Array<NumTuple<number>>>(transition: TransitionFunction<number>): TransitionFunction<V> {
-    return (from: V, to: V, t: number) => from.map((vector, i) => vector.map((n, j) => transition(n, to[i][j], t))) as V
+export function vectorArrayTransition<V extends Array<NumTuple<number>>>(fn: TransitionFunction<number>): TransitionFunction<V> {
+    return (from: V, to: V, t: number) => from.map((vector, i) => vector.map((n, j) => fn(n, to[i][j], t))) as V
 }
 
-export type TransitionOptions<T> = {
-    duration: number
+export interface TransitionProcess<T> extends AnimationOptions {
     from: T
     to: T
     fn: TransitionFunction<T>
+}
+export interface TransitionOptions<T> extends TransitionProcess<T> {
     apply: (current: T) => void
     complete?: () => void
 }
-export type RevisedTransitionOptions<T> = Omit<Partial<TransitionOptions<T>>, 'from' | 'apply'>
+export type TransitionRevisionOptions<T> = Partial<Omit<TransitionOptions<T>, 'from' | 'apply'>>
 export type TransitionState<T> = {
     time: number
     current?: T
 }
+
 export class Transition<T> {
     private _state: TransitionState<T> = { time: 0 }
 
@@ -46,7 +48,7 @@ export class Transition<T> {
         this.tick(0)
     }
 
-    public revise = (options: RevisedTransitionOptions<T>) => {
+    public revise = (options: TransitionRevisionOptions<T>) => {
         if (this.state.current) {
             this._options.from = this.state.current
             this._options.duration -= this.state.time

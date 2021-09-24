@@ -1,45 +1,45 @@
-import { Container, Loader, SCALE_MODES, Sprite } from "pixi.js"
+import { Container, Loader, SCALE_MODES, Sprite, Ticker } from "pixi.js"
 import { bufferTime, filter, concatMap } from "rxjs"
 import { MapRegion } from "../../model/"
 import { viewportUpdate$ } from "../../store/Map"
 import { RenderedRegion$ } from "../../store/MapData"
 import { PlaneVector } from "../../Type"
 import { pointToVector } from "../../utils"
-import { transitionPosition, transitionScale, TransitionTicker } from "../../utils/animation"
+import { TransitionTicker } from "../../utils/animation"
 import { linear, vectorTransition } from "../../utils/transition"
 
 export const mapContainer = new Container()
 mapContainer.sortableChildren = true
 mapContainer.zIndex = 0
 
-const transitionFrames = 12
-
 let positionTransitioning: TransitionTicker<PlaneVector> | undefined;
 let scaleTransitioning: TransitionTicker<number> | undefined;
 
-viewportUpdate$.subscribe(({ viewport: { position, scale }, animated }) => {
-    if (animated) {
+viewportUpdate$.subscribe(({ viewport: { position, scale }, animation }) => {
+    if (animation) {
         if (!positionTransitioning) {
-            positionTransitioning = transitionPosition(mapContainer, {
-                duration: transitionFrames,
+            positionTransitioning = new TransitionTicker(Ticker.shared, {
+                duration: animation.duration,
                 from: pointToVector(mapContainer.position),
                 to: position,
                 fn: vectorTransition(linear),
+                apply: v => mapContainer.position.set(...v),
                 complete: () => positionTransitioning = undefined
             }).start()
         } else {
-            positionTransitioning.revise({ to: position, duration: transitionFrames })
+            positionTransitioning.revise({ to: position, duration: animation.duration })
         }
         if (!scaleTransitioning) {
-            scaleTransitioning = transitionScale(mapContainer, {
-                duration: transitionFrames,
+            scaleTransitioning = new TransitionTicker(Ticker.shared, {
+                duration: animation.duration,
                 from: mapContainer.scale.x,
                 to: scale,
                 fn: linear,
+                apply: s => mapContainer.scale.set(s),
                 complete: () => scaleTransitioning = undefined
             }).start()
         } else {
-            scaleTransitioning.revise({ to: scale, duration: transitionFrames })
+            scaleTransitioning.revise({ to: scale, duration: animation.duration })
         }
     } else {
         mapContainer.position.set(...position)
