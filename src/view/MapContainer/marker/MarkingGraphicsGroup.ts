@@ -50,9 +50,13 @@ class TempPointGraphicGroup extends MarkingGraphicsGroup {
 class TempPathGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
-        return v.length === 0 ? [] :
-            v.length === 1 ? [new TempPoint(v[0])] :
-                [new TempPathSegment(...v.slice(-2) as [PlaneVector, PlaneVector])]
+        const res = []
+        if (this.vectors.length > 0) {
+            if (this.vectors.length > 1)
+                res.push(new TempPathSegment(...v.slice(-2) as [PlaneVector, PlaneVector]))
+            res.push(new TempPoint(v[v.length - 1]))
+        }
+        return res
     }
 }
 
@@ -72,12 +76,12 @@ class TempPolygonGraphicGroup extends MarkingGraphicsGroup {
         const v = this.vectors
         const closingIntersect = v.length >= 4 && segmentIntersectPath([v[0], v[v.length - 1]], v) !== -1
         const res: MarkerGraphics[] = []
-        if (v.length === 1) res.push(new TempPoint(v[0]))
-        else {
+        if (v.length > 1) {
             res.push(new TempPolygonBorder(v[v.length - 2], v[v.length - 1]))
             res.push(new TempPolygon(v))
             if (closingIntersect) res.push(new PlacedPolygonBorderCrossed(v[0], v[v.length - 1]))
         }
+        res.push(new TempPoint(v[v.length - 1]))
         return res
     }
 }

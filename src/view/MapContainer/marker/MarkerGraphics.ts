@@ -136,7 +136,6 @@ export class LineMarker extends MarkerGraphics implements MarkerOptions {
     lineColor = 0xFFFFFF
     size = 10
     lineWidth = 6
-    hasEndPoint?: boolean
     protected position(vectors: PlaneVector[]) {
         return vectors[0]
     }
@@ -146,17 +145,9 @@ export class LineMarker extends MarkerGraphics implements MarkerOptions {
             .clear()
             .lineStyle(this.lineWidth, this.lineColor, 1)
             .lineTo(...vectorMinus(p1, p0))
-        if (this.hasEndPoint) {
-            this.g
-                .beginFill(this.fillColor)
-                .lineStyle(0)
-                .drawCircle(...vectorMinus(p1, p0), this.size)
-                .endFill()
-        }
     }
-    protected constructor(p0: PlaneVector, p1: PlaneVector, init?: MarkerOptions, hasEndPoint?: boolean) {
+    protected constructor(p0: PlaneVector, p1: PlaneVector, init?: MarkerOptions) {
         super(p0, p1)
-        this.hasEndPoint = hasEndPoint
         this.applyOptions(init)
     }
 }

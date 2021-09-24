@@ -139,7 +139,7 @@ export class PlacedPathSegment extends LineMarker {
 
 export class TempPathSegment extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
-        super(p0, p1, undefined, true)
+        super(p0, p1, undefined)
         const colorMatrix = new filters.AlphaFilter();
         colorMatrix.alpha = 0.5;
         this.g.filters = [colorMatrix];
@@ -167,7 +167,7 @@ export class PlacedPolygonBorderCrossed extends LineMarker {
 
 export class TempPolygonBorder extends LineMarker {
     constructor(p0: PlaneVector, p1: PlaneVector) {
-        super(p0, p1, { lineColor: 0xAAAAAA, lineWidth: 4 }, true)
+        super(p0, p1, { lineColor: 0xAAAAAA, lineWidth: 4 })
         const colorMatrix = new filters.AlphaFilter();
         colorMatrix.alpha = 0.5;
         this.g.filters = [colorMatrix];
