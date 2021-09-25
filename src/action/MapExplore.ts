@@ -37,7 +37,7 @@ const twoFingerGesture$: Observable<GesturePositionPair<2>> = canvasPointerMove$
             withLatestFrom(canvasPointersCurrentlyDown$),
             scan(collectGesturePositions, new Map()),
             filter(map => map.size === 2),
-            map(acc => Array.from(acc.entries()).sort().map(([_, v]) => v) as GesturePosition<2>),
+            map(acc => Array.from(acc.entries()).sort(([id0], [id1]) => id0 - id1).map(([_, v]) => v) as GesturePosition<2>),
             pairwise(),
         )),
     )

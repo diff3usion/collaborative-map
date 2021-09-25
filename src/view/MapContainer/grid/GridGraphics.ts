@@ -13,6 +13,20 @@ interface GridLineOptions extends GridLine {
     label?: string
 }
 class GridLineGraphics extends AnimatedGraphics<GridLineOptions> {
+    private isHorizontal = false
+    private position = 0
+    private length = 0
+    private width = 2
+    private color = 0xAAAAAA
+    private label?: string
+    private labelText?: Text
+    private get lineStart(): PlaneVector {
+        return this.isHorizontal ? [0, this.position] : [this.position, 0]
+    }
+    private get lineEnd(): PlaneVector {
+        return this.isHorizontal ? [this.length, 0] : [0, this.length]
+    }
+
     protected appearProcess(animation: AnimationOptions): TransitionProcess<number> {
         return {
             duration: animation.duration,
@@ -28,20 +42,6 @@ class GridLineGraphics extends AnimatedGraphics<GridLineOptions> {
             to: 0,
             fn: linear,
         }
-    }
-    private isHorizontal = false
-    private position = 0
-    private length = 0
-    private width = 2
-    private color = 0xAAAAAA
-    private label?: string
-    private labelText?: Text
-
-    private get lineStart(): PlaneVector {
-        return this.isHorizontal ? [0, this.position] : [this.position, 0]
-    }
-    private get lineEnd(): PlaneVector {
-        return this.isHorizontal ? [this.length, 0] : [0, this.length]
     }
     protected move(animation?: AnimationOptions, from?: PlaneVector) {
         if (this.positionTransition) {

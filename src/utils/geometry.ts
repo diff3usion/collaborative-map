@@ -36,8 +36,8 @@ export function vectorTimes<V extends NumTuple<number>>(multiplier: number, vect
 export function vectorDivide<V extends NumTuple<number>>(divisor: number, vector: V): V {
     return vector.map(n => n / divisor) as V
 }
-export function vectorMean<V extends NumTuple<number>>(v0: V, ...vectors: V[]): V {
-    return vectors.reduce((m, v, n) => vectorPlus(m, vectorDivide(n + 1, vectorMinus(v, m)), v0))
+export function vectorMean<V extends NumTuple<number>>(v0: V, v1: V, ...vectors: V[]): V {
+    return vectorDivide(vectors.length + 2, vectors.reduce((acc, v) => vectorPlus(acc, v), vectorPlus(v0, v1)))
 }
 export function vectorNorm<V extends NumTuple<number>>(v0: V): number {
     return Math.sqrt(v0.reduce((sum, n) => sum + n * n, 0))
