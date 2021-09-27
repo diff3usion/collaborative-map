@@ -1,3 +1,6 @@
+export type KeyofWithType<T, U> = {
+    [P in keyof T]: T[P] extends U ? P : never
+}[keyof T]
 export type ZeroToNine = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 type _TupleOf<T, N extends number, R extends unknown[]> = R['length'] extends N ? R : _TupleOf<T, N, [T, ...R]>
 export type TupleOf<T, N extends number> = N extends N ? number extends N ? T[] : _TupleOf<T, N, []> : never

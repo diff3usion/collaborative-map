@@ -8,13 +8,13 @@ export const markingTypeKeyRect = 'marking_rect'
 export const markingTypeKeyPolygon = 'marking_polygon'
 export const markingTypeKeyEllipse = 'marking_ellipse'
 
-export const markingTypeDropdownKeyMap = new TwoWayMap(new Map([
+export const markingTypeDropdownKeyMap = TwoWayMap.from([
     [markingTypeKeyPoint, MapMarkingMode.Point],
     [markingTypeKeyPath, MapMarkingMode.Path],
     [markingTypeKeyRect, MapMarkingMode.Rect],
     [markingTypeKeyPolygon, MapMarkingMode.Polygon],
     [markingTypeKeyEllipse, MapMarkingMode.Ellipse],
-]))
+])
 
 export const markingTypeMaxPointsMap = new Map([
     [MapMarkingMode.Point, 1],

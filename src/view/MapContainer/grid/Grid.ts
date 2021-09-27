@@ -1,6 +1,6 @@
 import { PlaneVector, Viewport, } from "../../../Type"
 import { boundedNumber, nearestSmallerPowerOf2 } from "../../../utils"
-import { initArray, mapFilter, RecordedMap, RecordedMapActions } from "../../../utils/collection"
+import { initArray, mapFilter, RecordedActions, RecordedMap } from "../../../utils/collection"
 import { positionShift } from "../../../utils/geometry"
 
 export type GridLine = {
@@ -10,9 +10,10 @@ export type GridLine = {
     length: number
 }
 type GridLineMap = RecordedMap<number, GridLine>
+type GridLineActions = RecordedActions<GridLineMap>
 export type GridUpdate = {
     positions: number[],
-    actions: RecordedMapActions<number, GridLine>
+    actions: GridLineActions
 }
 export class Grid {
     private horizLines: GridLineMap = new RecordedMap()
@@ -56,7 +57,7 @@ export class Grid {
             .forEach(l => lines.set(l.relativePosition, l))
         mapFilter(lines, p => !positionSet.has(p))
             .forEach(l => lines.delete(l.relativePosition))
-        const actions = lines.popRecord()
+        const actions = lines.pop()
         return { positions, actions }
     }
 

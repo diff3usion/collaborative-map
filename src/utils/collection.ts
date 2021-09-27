@@ -1,75 +1,66 @@
 import "./"
 
-export type RecordedMapActions<K, V> = {
+type RecordedMapActions<K, V> = {
     added: Map<K, V>
     removed: Map<K, V>
-    updated: Map<K, V>
-    untouched: Map<K, V>
+    updated: Map<K, [V, V]>
 }
-export class RecordedMap<K, V> implements Map<K, V> {
-    private _map: Map<K, V>
+type RecordedSetActions<T> = {
+    added: Set<T>
+    removed: Set<T>
+}
+export type RecordedActions<T extends RecordedMap<any, any> | RecordedSet<any>>
+    = T extends RecordedMap<infer K, infer V> ? RecordedMapActions<K, V>
+    : T extends RecordedSet<infer T> ? RecordedSetActions<T>
+    : never
+export class RecordedMap<K, V> extends Map<K, V> {
     private _actions?: RecordedMapActions<K, V>
-    constructor(iterable?: Iterable<readonly [K, V]>) {
-        this._map = iterable ? new Map(iterable) : new Map()
-    }
 
     clear(): void {
-        return this._map.clear()
+        this.forEach((v, k) => { if (!this.record.added.has(k)) this.record.removed.set(k, v) })
+        this.record.updated.forEach(([v], k) => this.record.removed.set(k, v))
+        this.record.added.clear()
+        this.record.updated.clear()
+        return super.clear()
     }
     delete(key: K): boolean {
-        if (this._map.has(key)) {
+        if (this.has(key)) {
             if (this.record.added.has(key)) {
                 this.record.added.delete(key)
             } else {
-                this.record.removed.set(key, this._map.get(key)!)
-                this.record.updated.delete(key)
-                this.record.untouched.delete(key)
+                const updated = this.record.updated.get(key)
+                if (updated) {
+                    this.record.removed.set(key, updated[0])
+                } else {
+                    this.record.removed.set(key, this.get(key)!)
+                }
             }
         }
-        return this._map.delete(key)
-    }
-    forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void {
-        return this._map.forEach(callbackfn, thisArg)
-    }
-    get(key: K): V | undefined {
-        return this._map.get(key)
-    }
-    has(key: K): boolean {
-        return this._map.has(key)
+        return super.delete(key)
     }
     set(key: K, value: V): this {
-        this.record.untouched.delete(key)
-        if (this._map.has(key)) {
-            const target = this.record.added.has(key) ? this.record.added : this.record.updated
-            target.set(key, value)
+        if (this.has(key)) {
+            if (this.record.added.has(key)) {
+                this.record.added.set(key, value)
+            } else {
+                const updated = this.record.updated.get(key)
+                if (updated) {
+                    this.record.updated.set(key, [updated[0], value])
+                } else {
+                    this.record.updated.set(key, [this.get(key)!, value])
+                }
+            }
         } else {
-            if (this.record.removed.has(key)) {
+            const removed = this.record.removed.get(key)
+            if (removed) {
+                if (removed !== value)
+                    this.record.updated.set(key, [this.record.removed.get(key)!, value])
                 this.record.removed.delete(key)
-                this.record.updated.set(key, value)
             } else {
                 this.record.added.set(key, value)
             }
         }
-        this._map.set(key, value)
-        return this
-    }
-    get size(): number {
-        return this._map.size
-    }
-    entries(): IterableIterator<[K, V]> {
-        return this._map.entries()
-    }
-    keys(): IterableIterator<K> {
-        return this._map.keys()
-    }
-    values(): IterableIterator<V> {
-        return this._map.values()
-    }
-    [Symbol.iterator](): IterableIterator<[K, V]> {
-        return this._map[Symbol.iterator]()
-    }
-    get [Symbol.toStringTag](): string {
-        return this._map[Symbol.toStringTag]
+        return super.set(key, value)
     }
 
     get record(): RecordedMapActions<K, V> {
@@ -78,83 +69,92 @@ export class RecordedMap<K, V> implements Map<K, V> {
                 added: new Map(),
                 removed: new Map(),
                 updated: new Map(),
-                untouched: new Map(this._map),
             }
         }
         return this._actions
     }
-    reset(): this {
-        this._actions = undefined
-        return this
-    }
-    popRecord(): RecordedMapActions<K, V> {
+    pop(): RecordedMapActions<K, V> {
         const res = this.record
-        this.reset()
+        this._actions = undefined
         return res
     }
 }
 
-export class TwoWayMap<K, V> implements Map<K, V>{
-    private _map: Map<K, V>
-    private _reversed: Map<V, K>
-    constructor(map?: Map<K, V>) {
-        this._map = new Map()
-        this._reversed = new Map()
-        if (map) map.forEach((v, k) => this.set(k, v))
+export class RecordedSet<T> extends Set<T> {
+    private _actions?: RecordedSetActions<T>
+
+    add(value: T): this {
+        if (!this.has(value)) {
+            this.record.added.add(value)
+        }
+        return super.add(value)
+    }
+    clear(): void {
+        setAdd(this.record.removed, setSubtract(this, this.record.added))
+        return super.clear()
+    }
+    delete(value: T): boolean {
+        if (this.has(value)) {
+            if (this.record.added.has(value)) {
+                this.record.added.delete(value)
+            } else {
+                this.record.removed.add(value)
+            }
+        }
+        return super.delete(value)
+    }
+
+    get record(): RecordedSetActions<T> {
+        if (!this._actions) {
+            this._actions = {
+                added: new Set(),
+                removed: new Set(),
+            }
+        }
+        return this._actions
+    }
+}
+
+export class TwoWayMap<K, V> extends Map<K, V> {
+    private _reversed: Map<V, K> = new Map()
+
+    private constructor() {
+        super()
+    }
+    static from<K, V>(iterable?: Iterable<readonly [K, V]>): TwoWayMap<K, V> {
+        const res = new TwoWayMap<K, V>()
+        if (iterable) for (let [k, v] of iterable) res.set(k, v)
+        return res
     }
 
     clear(): void {
-        this._map.clear()
+        super.clear()
         this._reversed.clear()
     }
     delete(key: K): boolean {
-        const v = this._map.get(key)
-        if (v) this._reversed.delete(v)
-        return this._map.delete(key)
-    }
-    forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void {
-        this._map.forEach(callbackfn, thisArg)
-    }
-    get(key: K): V | undefined {
-        return this._map.get(key)
-    }
-    has(key: K): boolean {
-        return this._map.has(key)
+        const value = this.get(key)
+        if (value) this._reversed.delete(value)
+        return super.delete(key)
     }
     set(key: K, value: V): this {
-        this._map.set(key, value)
+        super.set(key, value)
         this._reversed.set(value, key)
         return this
     }
-    get size(): number {
-        return this._map.size
-    }
-    entries(): IterableIterator<[K, V]> {
-        return this._map.entries()
-    }
-    keys(): IterableIterator<K> {
-        return this._map.keys()
-    }
-    values(): IterableIterator<V> {
-        return this._map.values()
-    }
-    [Symbol.iterator](): IterableIterator<[K, V]> {
-        return this._map[Symbol.iterator]()
-    }
-    get [Symbol.toStringTag](): string {
-        return this._map[Symbol.toStringTag]
-    }
 
-    reverseGet(k: V): K | undefined {
-        return this._reversed.get(k)
+    get reversed(): Map<V, K> {
+        return new Map(this._reversed)
     }
-    reverseHas(v: V): boolean {
-        return this._reversed.has(v)
+    reverseGet(value: V): K | undefined {
+        return this._reversed.get(value)
     }
-    reverseDelete(v: V): boolean {
-        const k = this._reversed.get(v)
-        if (k) this._map.delete(k)
-        return this._reversed.delete(v)
+    reverseHas(value: V): boolean {
+        return this._reversed.has(value)
+    }
+    reverseDelete(value: V): boolean {
+        const key = this._reversed.get(value)
+        if (key) super.delete(key)
+        return this._reversed.delete(value)
     }
 }
 
@@ -199,39 +199,52 @@ export function mapMapValue<K, V, T>(map: Map<K, V>, mapper: (v: V, k: K) => T):
 export function mapGetOrInit<K, V>(map: Map<K, V>, key: K, val: V): V {
     return map.has(key) ? map.get(key)! : map.set(key, val).get(key)!
 }
-export function mapPushOrInit<T, F>(map: Map<T, F[]>, key: T, value: F): void {
+export function arrayMapPushOrInit<T, F>(map: Map<T, F[]>, key: T, value: F): void {
     map.has(key) ? map.get(key)!.push(value) : map.set(key, [value])
 }
-export function mapAddOrInit<T, F>(map: Map<T, Set<F>>, key: T, value: F): void {
+export function setMapAddOrInit<T, F>(map: Map<T, Set<F>>, key: T, value: F): void {
     map.has(key) ? map.get(key)!.add(value) : map.set(key, new Set([value]))
 }
 
-export function arraySomeIn<T>(arr: T[], set: { has(key: T): boolean }): boolean {
-    return arr.some(c => set.has(c))
+interface PredicateCollection<T> { has(key: T): boolean }
+export function arraySomeIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.some(c => collection.has(c))
 }
-export function arraySomeNotIn<T>(arr: T[], set: { has(key: T): boolean }): boolean {
-    return arr.some(c => !set.has(c))
+export function arraySomeNotIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.some(c => !collection.has(c))
 }
-export function arrayEveryIn<T>(arr: T[], set: { has(key: T): boolean }): boolean {
-    return arr.every(c => set.has(c))
+export function arrayEveryIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.every(c => collection.has(c))
 }
-export function arrayEveryNotIn<T>(arr: T[], set: { has(key: T): boolean }): boolean {
-    return arr.every(c => !set.has(c))
+export function arrayEveryNotIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.every(c => !collection.has(c))
 }
-export function arrayFilterIn<T>(arr: T[], set: { has(key: T): boolean }): T[] {
-    return arr.filter(c => set.has(c))
+export function arrayFilterIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
+    return arr.filter(c => collection.has(c))
 }
-export function arrayFilterNotIn<T>(arr: T[], set: { has(key: T): boolean }): T[] {
-    return arr.filter(c => !set.has(c))
+export function arrayFilterNotIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
+    return arr.filter(c => !collection.has(c))
 }
 
-export function setAdd<T>(set0: Set<T>, collection: Array<T> | Set<T>): Set<T> {
-    collection.forEach((v: T) => set0.add(v))
-    return set0
+export function setAdd<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
+    for (let v of iterable) set.add(v)
+    return set
 }
-export function setRemove<T>(set0: Set<T>, collection: Array<T> | Set<T>): Set<T> {
-    collection.forEach((v: T) => set0.delete(v))
-    return set0
+export function setRemove<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
+    for (let v of iterable) set.delete(v)
+    return set
+}
+export function mapAdd<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, V]>): Map<K, V> {
+    for (let [k, v] of iterable) map.set(k, v)
+    return map
+}
+export function mapDelete<K, V>(map: Map<K, V>, iterable: Iterable<K>): Map<K, V> {
+    for (let k of iterable) map.delete(k)
+    return map
+}
+export function mapRemove<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, V]>): Map<K, V> {
+    for (let [k, v] of iterable) if (map.get(k) === v) map.delete(k)
+    return map
 }
 
 function twoSetUnion<T>(a: Set<T>, b: Set<T>): Set<T> {

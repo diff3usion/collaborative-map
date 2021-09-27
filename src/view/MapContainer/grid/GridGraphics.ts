@@ -143,7 +143,7 @@ class GridGraphicsGroup {
             graphics.get(p)?.remove(animation)
             graphics.delete(p)
         })
-        updated.forEach((line, p) =>
+        updated.forEach(([_, line], p) =>
             graphics.get(p)?.update(optionsOf(line), animation))
     }
 
