@@ -19,4 +19,4 @@ export const filterIsSpecifyingStage = () => filterMarkingStage(MapMarkingStage.
 
 export const filterCanPlaceMorePoints = () =>
     filterWithMultipleLatestFrom(placedPoints$, markingMode$)
-        (([placedPoints, mode]) => placedPoints.length < markingTypeMaxPointsMap.get(mode)!)
+        (([placedPoints, mode]) => placedPoints.length < markingTypeMaxPointsMap[mode])

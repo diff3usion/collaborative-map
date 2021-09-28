@@ -16,16 +16,16 @@ export const markingTypeDropdownKeyMap = TwoWayMap.from([
     [markingTypeKeyEllipse, MapMarkingMode.Ellipse],
 ])
 
-export const markingTypeMaxPointsMap = new Map([
-    [MapMarkingMode.Point, 1],
-    [MapMarkingMode.Path, Infinity],
-    [MapMarkingMode.Rect, 2],
-    [MapMarkingMode.Polygon, Infinity],
-    [MapMarkingMode.Ellipse, 2],
-])
+export const markingTypeMaxPointsMap: Record<MapMarkingMode, number> = {
+    [MapMarkingMode.Point]: 1,
+    [MapMarkingMode.Path]: Infinity,
+    [MapMarkingMode.Rect]: 2,
+    [MapMarkingMode.Polygon]: Infinity,
+    [MapMarkingMode.Ellipse]: 2,
+}
 
-export const controlModeCursorStyles: Map<MapControlMode, string> = new Map([
-    [MapControlMode.Explore, 'grab'],
-    [MapControlMode.Marking, 'crosshair'],
-    [MapControlMode.Uploads, 'auto'],
-])
+export const controlModeCursorStyles: Record<MapControlMode, string> = {
+    [MapControlMode.Explore]: 'grab',
+    [MapControlMode.Marking]: 'crosshair',
+    [MapControlMode.Uploads]: 'auto',
+}

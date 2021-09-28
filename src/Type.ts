@@ -12,6 +12,10 @@ export type PlaneVector = [number, number]
 export type PlaneSize = [number, number]
 export type PlaneRect = [PlaneVector, PlaneSize]
 export type PlaneSegment = [PlaneVector, PlaneVector]
+export enum PlaneAxis {
+    X = 0,
+    Y = 1,
+}
 export type Viewport = {
     position: PlaneVector
     scale: number

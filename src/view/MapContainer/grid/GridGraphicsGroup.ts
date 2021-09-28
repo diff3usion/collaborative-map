@@ -1,15 +1,14 @@
 import { Container } from "pixi.js"
-import { KeyofWithType } from "../../../Type"
+import { KeyofWithType, PlaneAxis } from "../../../Type"
 import { MapDiff, twoMapsDiff } from "../../../utils/collection"
-import { GridLineData, GridData } from "./GridData"
-import { getGraphicsStyle } from "./GridGraphicsStyle"
-import { GridLineGraphics, initGridLineGraphics, updateGridLineGraphics } from "./GridLineGraphics"
+import { GridLineData, GridData, GridMaps, diffGridMaps } from "./GridData"
+import { getGridLineStyle } from "./GridLineStyleTemplates"
+import { GridLineGraphics, GridLineGraphicsData, initGridLineGraphics, updateGridLineGraphics } from "./GridLineGraphics"
 
 type GridLineGraphicsMap = Map<number, GridLineGraphics>
-export type GridGraphicsGroup = {
+type GridGraphicsMaps = Record<PlaneAxis, GridLineGraphicsMap>
+export type GridGraphicsGroup = GridGraphicsMaps & {
     data: GridData
-    horizontalGraphics: GridLineGraphicsMap
-    verticalGraphics: GridLineGraphicsMap
     container: Container
 }
 
@@ -20,7 +19,7 @@ function addLineGraphics(
     data: GridData,
 ): void {
     for (let [p, line] of positions) {
-        const graphics = initGridLineGraphics({ ...line, ...getGraphicsStyle(line, data) })
+        const graphics = initGridLineGraphics({ ...line, ...getGridLineStyle(line, data) })
         map.set(p, graphics)
         container.addChild(graphics.graphics)
     }
@@ -31,7 +30,7 @@ function updateLineGraphics(
     data: GridData,
 ): void {
     for (let [p, [_, line]] of positions)
-        updateGridLineGraphics(map.get(p)!, { ...line, ...getGraphicsStyle(line, data) })
+        updateGridLineGraphics(map.get(p)!, { ...line, ...getGridLineStyle(line, data) })
 }
 function removeLineGraphics(
     { container }: GridGraphicsGroup,
@@ -50,24 +49,23 @@ function removeLineGraphics(
 }
 function updateGraphicsMap(
     group: GridGraphicsGroup,
-    selector: KeyofWithType<GridGraphicsGroup, GridLineGraphicsMap>,
+    axis: PlaneAxis,
     update: MapDiff<number, GridLineData>,
     data: GridData,
 ): void {
     const { addition: added, deletion: removed, update: updated } = update
-    addLineGraphics(group, group[selector], added, data)
-    updateLineGraphics(group[selector], updated, data)
-    removeLineGraphics(group, group[selector], removed.keys())
+    addLineGraphics(group, group[axis], added, data)
+    updateLineGraphics(group[axis], updated, data)
+    removeLineGraphics(group, group[axis], removed.keys())
 }
 
 export function updateGridGraphicsGroup(
     group: GridGraphicsGroup,
     data: GridData,
 ): void {
-    const horizontalUpdate = twoMapsDiff(group.data.horizontalLines, data.horizontalLines)
-    const verticalUpdate = twoMapsDiff(group.data.verticalLines, data.verticalLines)
-    updateGraphicsMap(group, 'horizontalGraphics', horizontalUpdate, data)
-    updateGraphicsMap(group, 'verticalGraphics', verticalUpdate, data)
+    const { [PlaneAxis.X]: xUpdate, [PlaneAxis.Y]: yUpdate } = diffGridMaps(group.data, data)
+    updateGraphicsMap(group, PlaneAxis.X, xUpdate, data)
+    updateGraphicsMap(group, PlaneAxis.Y, yUpdate, data)
     group.data = data
 }
 export function initGridGraphicsGroup(
@@ -76,8 +74,8 @@ export function initGridGraphicsGroup(
 ): GridGraphicsGroup {
     return {
         data,
-        horizontalGraphics: new Map(),
-        verticalGraphics: new Map(),
+        [PlaneAxis.X]: new Map(),
+        [PlaneAxis.Y]: new Map(),
         container,
     }
 }

@@ -1,5 +1,5 @@
 import { boundedNumber } from "."
-import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf } from "../Type"
+import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf, PlaneAxis } from "../Type"
 import { initArray, init2dArray, map2dArray } from "./collection"
 
 export const initTuple = initArray as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
@@ -82,11 +82,11 @@ export const doesTwoRectsOverlap: (r1: PlaneRect, r2: PlaneRect) => boolean
 
 // Shift: input relative to viewport --> output relative to global
 
-export const positionShift: (n: number, isHorizontal: boolean, viewport: Viewport) => number
-    = (n, isHorizontal, { position: [x, y], scale }) => scale * n + (isHorizontal ? y : x)
+export const positionShift: (n: number, orientation: PlaneAxis, viewport: Viewport) => number
+    = (n, axis, { position: [x, y], scale }) => scale * n + (axis === PlaneAxis.X ? y : x)
 
-export const positionUnshift: (n: number, isHorizontal: boolean, viewport: Viewport) => number
-    = (n, isHorizontal, { position: [x, y], scale }) => (n - (isHorizontal ? y : x)) / scale
+export const positionUnshift: (n: number, orientation: PlaneAxis, viewport: Viewport) => number
+    = (n, axis, { position: [x, y], scale }) => (n - (axis === PlaneAxis.X ? y : x)) / scale
 
 export const planeVectorShift: (v: PlaneVector, viewport: Viewport) => PlaneVector
     = (v, { position, scale }) => vectorPlus(vectorTimes(scale, v), position)
@@ -123,9 +123,9 @@ export const scaleRectWithMinSize: (rect: PlaneRect, scale: number, fixed: Plane
         return scaleRectWithFixedPoint([position, size], scale, fixed)
     }
 
-export const divideRectByHalf: (rect: PlaneRect, isHorizontal: boolean) => [PlaneRect, PlaneRect]
-    = ([[x, y], [w, h]], isHorizontal) =>
-        isHorizontal ? [
+export const divideRectByHalf: (rect: PlaneRect, axis: PlaneAxis) => [PlaneRect, PlaneRect]
+    = ([[x, y], [w, h]], axis) =>
+        axis === PlaneAxis.X ? [
             [[x, y], [w / 2, h]],
             [[x + w / 2, y], [w / 2, h]],
         ] : [

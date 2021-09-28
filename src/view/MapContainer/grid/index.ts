@@ -27,13 +27,17 @@ export const gridGraphicsGroup = initGridGraphicsGroup(
 )
 
 const gridUpdate$ = new Subject<SizedViewport>()
-const gridsData$ = gridUpdate$
+const gridData$ = gridUpdate$
     .pipe(
         map(svp => initGridData(svp, defaultGridOptions))
     )
 
-gridsData$
+gridData$
     .subscribe(data => updateGridGraphicsGroup(gridGraphicsGroup, data))
+
+gridData$.pipe(
+
+)
 
 sizedViewport$
     .subscribe(gridUpdate$)

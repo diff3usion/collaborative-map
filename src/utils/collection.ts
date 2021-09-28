@@ -9,9 +9,9 @@ export type SetDiff<T> = {
     addition: Set<T>
     deletion: Set<T>
 }
-export type RecordedDiff<T extends DiffRecordedMap<any, any> | DiffRecordedSet<any>>
-    = T extends DiffRecordedMap<infer K, infer V> ? MapDiff<K, V>
-    : T extends DiffRecordedSet<infer T> ? SetDiff<T>
+export type Diff<T extends Map<any, any> | Set<any>>
+    = T extends Map<infer K, infer V> ? MapDiff<K, V>
+    : T extends Set<infer T> ? SetDiff<T>
     : never
 export class DiffRecordedMap<K, V> extends Map<K, V> {
     private _actions?: MapDiff<K, V>

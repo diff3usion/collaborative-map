@@ -1,98 +1,97 @@
 import { Graphics, Text } from "pixi.js"
-import { PlaneVector } from "../../../Type"
+import { PlaneAxis, PlaneVector } from "../../../Type"
+import { someDiffProperties } from "../../../utils"
 import { GridLineData } from "./GridData"
 
-export interface GridLineDynamicStyle {
-    dimming?: number,
-    label?: string
-}
-export interface GridLineGraphicsStyle extends GridLineDynamicStyle {
+export type GridLineTemplateStyle = {
     width: number
     color: number
     alpha: number
 }
-export interface GridLineGraphicsData extends GridLineData, GridLineGraphicsStyle { }
-export type GridLineGraphics = {
-    data: GridLineGraphicsData
+export type GridLineDynamicStyle = {
+    dimming?: number,
+    label?: string
+}
+export type GridLineGraphicsStyle = GridLineTemplateStyle & GridLineDynamicStyle
+export type GridLineGraphicsData = GridLineData & GridLineGraphicsStyle
+export type GridLineGraphicsState = {
     graphics: Graphics
     labelText?: Text
 }
+export type GridLineGraphics = GridLineGraphicsData & GridLineGraphicsState
 
 function positionPoint(
-    { isHorizontal, position }: GridLineData
+    { axis, position }: GridLineData
 ): PlaneVector {
-    return isHorizontal ? [0, position] : [position, 0]
+    return axis === PlaneAxis.X ? [0, position] : [position, 0]
 }
 function lineToEndPoint(
-    { isHorizontal, length }: GridLineData
+    { axis, length }: GridLineData
 ): PlaneVector {
-    return isHorizontal ? [length, 0] : [0, length]
+    return axis === PlaneAxis.X ? [length, 0] : [0, length]
 }
 function labelPositionPoint(
-    { isHorizontal }: GridLineData
+    { axis }: GridLineData
 ): PlaneVector {
-    return isHorizontal ? [8, 4] : [4, 8]
+    return axis === PlaneAxis.X ? [8, 4] : [4, 8]
+}
+function move(
+    line: GridLineGraphics,
+): void {
+    const { graphics } = line
+    graphics.position.set(...positionPoint(line))
+}
+function draw(
+    line: GridLineGraphics,
+): void {
+    const { width, color, graphics } = line
+    graphics
+        .clear()
+        .lineStyle(width, color)
+        .lineTo(...lineToEndPoint(line))
 }
 function refreshText(
     line: GridLineGraphics,
 ): void {
-    const { data, graphics, labelText } = line
-    const { alpha, label } = data
-    if (!label || label !== labelText?.text) {
-        graphics.removeChildren()
-        labelText?.destroy()
-        line.labelText = undefined
-        if (label) {
-            line.labelText = new Text(label, { fontSize: 16 })
-            line.labelText.alpha = alpha
-            line.labelText.position.set(...labelPositionPoint(data))
-            graphics.addChild(line.labelText)
-        }
+    const { graphics, labelText, label } = line
+    graphics.removeChildren()
+    labelText?.destroy()
+    line.labelText = undefined
+    if (label) {
+        line.labelText = new Text(label, { fontSize: 16 })
+        line.labelText.position.set(...labelPositionPoint(line))
+        graphics.addChild(line.labelText)
     }
 }
-function draw(
+function refreshAlpha(
     line: GridLineGraphics,
-): GridLineGraphics {
-    const { data, graphics } = line
-    const { width, color } = data
-    graphics
-        .clear()
-        .lineStyle(width, color)
-        .lineTo(...lineToEndPoint(data))
-        .lineStyle(0)
-        .beginFill(color)
-        .endFill()
-    refreshText(line)
-    return line
-}
-function move(
-    line: GridLineGraphics,
-): GridLineGraphics {
-    const { data, graphics } = line
-    graphics.position.set(...positionPoint(data))
-    return line
+): void {
+    const { graphics, alpha, dimming } = line
+    const res = dimming ? dimming * alpha : alpha
+    graphics.alpha = res
 }
 
 export function updateGridLineGraphics(
     line: GridLineGraphics,
     data: GridLineGraphicsData,
 ): void {
-    const { data: prev } = line
-    const { position, length, width, color, label } = data
-    const needDraw = prev.label !== label
-        || prev.length !== length
-        || prev.color !== color
-        || prev.width !== width
-    const needMove = needDraw || prev.position !== position
-    line.data = data
-    if (needDraw) draw(line)
+    const needDraw = someDiffProperties(line, data, ['label', 'length', 'color', 'width'])
+    const needMove = needDraw || someDiffProperties(line, data, ['position'])
+    const needRefreshAlpha = needDraw || someDiffProperties(line, data, ['alpha', 'dimming'])
+    const needRefreshText = someDiffProperties(line, data, ['label'])
+    Object.assign(line, data)
     if (needMove) move(line)
+    if (needDraw) draw(line)
+    if (needRefreshText) refreshText(line)
+    if (needRefreshAlpha) refreshAlpha(line)
 }
 export function initGridLineGraphics(
     data: GridLineGraphicsData
 ): GridLineGraphics {
-    const graphics = new Graphics()
-    const res = { data, graphics }
-    draw(move(res))
+    const res: GridLineGraphics = { ...data, graphics: new Graphics() }
+    move(res)
+    draw(res)
+    refreshText(res)
+    refreshAlpha(res)
     return res
 }

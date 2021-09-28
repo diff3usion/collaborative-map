@@ -12,7 +12,7 @@ import { eventToPosition } from "../utils"
 //#region Default Cursor Style for Control Modes
 controlMode$
     .pipe(
-        map(mode => controlModeCursorStyles.get(mode)!),
+        map(mode => controlModeCursorStyles[mode]),
     ).subscribe(rendererCursorStyle$)
 //#endregion
 

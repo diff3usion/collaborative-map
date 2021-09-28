@@ -36,7 +36,7 @@ export abstract class AnimatedGraphics<T> {
                 complete
             }
             if (this.visibilityTransition) {
-                this.visibilityTransition.revise(pickProperties(disappearTransitionOptions, 'duration', 'to', 'complete'))
+                this.visibilityTransition.revise(pickProperties(disappearTransitionOptions, ['duration', 'to', 'complete']))
             } else {
                 this.visibilityTransition = new TransitionTicker(Ticker.shared, disappearTransitionOptions).start()
             }

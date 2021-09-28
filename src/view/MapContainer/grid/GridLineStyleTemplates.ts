@@ -1,5 +1,5 @@
 import { GridData, GridLineData } from "./GridData"
-import { GridLineDynamicStyle, GridLineGraphicsStyle } from "./GridLineGraphics"
+import { GridLineGraphicsStyle, GridLineTemplateStyle } from "./GridLineGraphics"
 
 enum StyleType {
     AxisLine,
@@ -7,43 +7,37 @@ enum StyleType {
     MajorLine,
     MinorLine,
 }
-type StyleTemplate = Omit<GridLineGraphicsStyle, keyof GridLineDynamicStyle>
 
 const labelOffset = 32
-const styleTemplates = new Map<StyleType, StyleTemplate>([
-    [StyleType.AxisLine, {
+const styleTemplates: Record<StyleType, GridLineTemplateStyle> = {
+    [StyleType.AxisLine]: {
         width: 4,
         color: 0x888888,
         alpha: 0.6
-    }],
-    [StyleType.TopLevelLine, {
+    },
+    [StyleType.TopLevelLine]: {
         width: 3,
         color: 0x999999,
         alpha: 0.5
-    }],
-    [StyleType.MajorLine, {
+    },
+    [StyleType.MajorLine]: {
         width: 2,
         color: 0x999999,
         alpha: 0.5
-    }],
-    [StyleType.MinorLine, {
+    },
+    [StyleType.MinorLine]: {
         width: 1,
         color: 0xAAAAAA,
         alpha: 0.4
-    }],
-])
-
-function getStyleTemplate(
-    type: StyleType,
-): StyleTemplate {
-    return styleTemplates.get(type)!
+    },
 }
+
 function getStyleType(
     line: GridLineData,
     grid: GridData,
 ): StyleType {
     const { relativePosition } = line
-    const { options: { maxLineGap }, gap } = grid
+    const { maxLineGap, gap } = grid
     if (relativePosition === 0) return StyleType.AxisLine
     if (relativePosition % maxLineGap === 0) return StyleType.TopLevelLine
     if (gap === 0 || (relativePosition / gap) % 2 === 0) return StyleType.MajorLine
@@ -58,12 +52,12 @@ function getStyleLabel(
     return type !== StyleType.MinorLine && canFitLabel ? `${relativePosition}` : undefined
 }
 
-export function getGraphicsStyle(
+export function getGridLineStyle(
     line: GridLineData,
     grid: GridData,
 ): GridLineGraphicsStyle {
     const type = getStyleType(line, grid)
     const label = getStyleLabel(line, type)
-    const template = getStyleTemplate(type)
+    const template = styleTemplates[type]
     return { ...template, label }
 }

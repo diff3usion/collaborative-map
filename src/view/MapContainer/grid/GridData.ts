@@ -1,11 +1,11 @@
-import { PlaneVector, SizedViewport, Viewport, } from "../../../Type"
+import { PlaneAxis, PlaneVector, SizedViewport, Viewport, } from "../../../Type"
 import { boundedNumber, nearestSmallerPowerOf2 } from "../../../utils"
-import { initArray } from "../../../utils/collection"
+import { initArray, Diff, twoMapsDiff } from "../../../utils/collection"
 import { positionShift } from "../../../utils/geometry"
 
 export type GridLineData = Readonly<{
     relativePosition: number
-    isHorizontal: boolean
+    axis: PlaneAxis
     position: number
     length: number
 }>
@@ -15,12 +15,12 @@ export type GridOptions = Readonly<{
     minLineGap: number
     maxLineGap: number
 }>
-export type GridData = Readonly<{
-    options: GridOptions
-    horizontalLines: GridLineDataMap
-    verticalLines: GridLineDataMap
-    gap: number,
+export type GridState = Readonly<{
+    gap: number
 }>
+export type GridMaps = Readonly<Record<PlaneAxis, GridLineDataMap>>
+export type GridMapsDiff = Readonly<Record<PlaneAxis, Diff<GridLineDataMap>>>
+export type GridData = GridOptions & GridMaps & GridState
 
 function sizeToGridLineGap(
     { minLineGap, maxLineGap, desiredLineCount }: GridOptions,
@@ -44,27 +44,27 @@ function gridPositions(
     return initArray(count, idx => start + idx * gap)
 }
 function initGridLineData(
-    isHorizontal: boolean,
+    axis: PlaneAxis,
     viewport: Viewport,
     length: number,
     relativePosition: number
 ): GridLineData {
     return {
         relativePosition,
-        isHorizontal,
-        position: positionShift(relativePosition, isHorizontal, viewport),
+        axis,
+        position: positionShift(relativePosition, axis, viewport),
         length,
     }
 }
 function initGridLineDataMap(
-    isHorizontal: boolean,
+    axis: PlaneAxis,
     viewport: Viewport,
     positions: number[],
     length: number,
 ): GridLineDataMap {
     const res = new Map<number, GridLineData>()
     positions
-        .map(p => initGridLineData(isHorizontal, viewport, length, p))
+        .map(p => initGridLineData(axis, viewport, length, p))
         .forEach(l => res.set(l.relativePosition, l))
     return res
 }
@@ -78,7 +78,19 @@ export function initGridData(
     const gap = sizeToGridLineGap(options, size, scale)
     const horizontalPositions = gridPositions(-y, height, gap, scale)
     const verticalPositions = gridPositions(-x, width, gap, scale)
-    const horizontalLines = initGridLineDataMap(true, viewport, horizontalPositions, width)
-    const verticalLines = initGridLineDataMap(false, viewport, verticalPositions, height)
-    return { options, horizontalLines, verticalLines, gap }
+    return {
+        ...options,
+        [PlaneAxis.X]: initGridLineDataMap(PlaneAxis.X, viewport, horizontalPositions, width),
+        [PlaneAxis.Y]: initGridLineDataMap(PlaneAxis.Y, viewport, verticalPositions, height),
+        gap,
+    }
+}
+export function diffGridMaps(
+    data0: GridMaps,
+    data1: GridMaps,
+): GridMapsDiff {
+    return {
+        [PlaneAxis.X]: twoMapsDiff(data0[PlaneAxis.X], data1[PlaneAxis.X]),
+        [PlaneAxis.Y]: twoMapsDiff(data0[PlaneAxis.Y], data1[PlaneAxis.Y]),
+    }
 }

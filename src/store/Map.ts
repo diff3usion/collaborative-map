@@ -1,6 +1,6 @@
 import { BehaviorSubject, combineLatest, combineLatestWith, distinctUntilChanged, map, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
 
-import { EventButtonType, PlaneRect, PlaneVector, SizedViewport, Viewport, ViewportUpdate } from "../Type"
+import { EventButtonType, PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport, ViewportUpdate } from "../Type"
 import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils"
 import { mainPanelSize$ } from "../intent/MainPanel"
@@ -72,7 +72,7 @@ export function viewportFocusRect(): OperatorFunction<PlaneRect, Viewport> {
         withLatestFrom(viewport$, mainPanelSize$),
         map(([rect, viewport, size]) => {
             const globalRect = [relativeToGlobalPosition(rect[0], viewport), vectorTimes(viewport.scale, rect[1])] as PlaneRect
-            const displayRect = divideRectByHalf([[0, 0], size], true)[1]
+            const displayRect = divideRectByHalf([[0, 0], size], PlaneAxis.X)[1]
             const scale = scaleToFitRectIn(globalRect, displayRect[1])
             const transformation = scaleWithMovingPoint(scale, rectCenter(globalRect), rectCenter(displayRect))
             return {

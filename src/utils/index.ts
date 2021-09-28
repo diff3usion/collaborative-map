@@ -1,5 +1,4 @@
 import { InteractionEvent, Point } from "pixi.js";
-import { isFirefox } from 'react-device-detect';
 import { PlaneVector, Viewport } from "../Type";
 
 export const bytesToNumber: (bytes: Uint8Array, index: number, size: number) => number
@@ -61,9 +60,44 @@ export function boundedNumber(lower: number, upper: number, n: number): number {
     return Math.max(lower, Math.min(upper, n))
 }
 
-export function pickProperties<T extends Object, F extends (keyof T)[]>(obj: T, ...keys: F): Pick<T, F[number]> {
+export function pickProperties<T extends Object, F extends (keyof T)[]>(
+    obj: T,
+    keys: F,
+): Pick<T, F[number]> {
     return keys.reduce((a, x) => {
-        if (obj.hasOwnProperty(x)) a[x] = obj[x];
-        return a;
+        if (obj.hasOwnProperty(x)) a[x] = obj[x]
+        return a
     }, {} as Partial<T>) as Pick<T, F[number]>
+}
+export function sameProperties<T extends Object, F extends keyof T>(
+    obj0: T,
+    obj1: T,
+    keys: F[],
+    comparator = (obj0: T[F], obj1: T[F]) => obj0 === obj1
+): F[] {
+    return keys.filter(k => comparator(obj0[k], obj1[k]))
+}
+export function diffProperties<T extends Object, F extends keyof T>(
+    obj0: T,
+    obj1: T,
+    keys: F[],
+    comparator = (obj0: T[F], obj1: T[F]) => obj0 === obj1
+): F[] {
+    return keys.filter(k => !comparator(obj0[k], obj1[k]))
+}
+export function someSameProperties<T extends Object, F extends keyof T>(
+    obj0: T,
+    obj1: T,
+    keys: F[],
+    comparator = (obj0: T[F], obj1: T[F]) => obj0 === obj1
+): boolean {
+    return keys.some(k => comparator(obj0[k], obj1[k]))
+}
+export function someDiffProperties<T extends Object, F extends keyof T>(
+    obj0: T,
+    obj1: T,
+    keys: F[],
+    comparator = (obj0: T[F], obj1: T[F]) => obj0 === obj1
+): boolean {
+    return keys.some(k => !comparator(obj0[k], obj1[k]))
 }
