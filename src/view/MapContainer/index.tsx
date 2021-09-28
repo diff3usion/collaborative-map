@@ -18,7 +18,7 @@ import { markingContainer } from "./marker/Marking"
 import { mapContainer } from "./Map"
 import { observeEvent } from "../../utils/rx"
 import { documentKeyPress$ } from "../../intent/Control"
-import { gridContainer } from "./grid/GridGraphics"
+import { gridContainer } from "./grid/"
 
 PIXI.settings.FILTER_RESOLUTION = devicePixelRatio
 

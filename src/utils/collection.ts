@@ -1,38 +1,38 @@
 import "./"
 
-type RecordedMapActions<K, V> = {
-    added: Map<K, V>
-    removed: Map<K, V>
-    updated: Map<K, [V, V]>
+export type MapDiff<K, V> = {
+    addition: Map<K, V>
+    deletion: Map<K, V>
+    update: Map<K, [V, V]>
 }
-type RecordedSetActions<T> = {
-    added: Set<T>
-    removed: Set<T>
+export type SetDiff<T> = {
+    addition: Set<T>
+    deletion: Set<T>
 }
-export type RecordedActions<T extends RecordedMap<any, any> | RecordedSet<any>>
-    = T extends RecordedMap<infer K, infer V> ? RecordedMapActions<K, V>
-    : T extends RecordedSet<infer T> ? RecordedSetActions<T>
+export type RecordedDiff<T extends DiffRecordedMap<any, any> | DiffRecordedSet<any>>
+    = T extends DiffRecordedMap<infer K, infer V> ? MapDiff<K, V>
+    : T extends DiffRecordedSet<infer T> ? SetDiff<T>
     : never
-export class RecordedMap<K, V> extends Map<K, V> {
-    private _actions?: RecordedMapActions<K, V>
+export class DiffRecordedMap<K, V> extends Map<K, V> {
+    private _actions?: MapDiff<K, V>
 
     clear(): void {
-        this.forEach((v, k) => { if (!this.record.added.has(k)) this.record.removed.set(k, v) })
-        this.record.updated.forEach(([v], k) => this.record.removed.set(k, v))
-        this.record.added.clear()
-        this.record.updated.clear()
+        this.forEach((v, k) => { if (!this.record.addition.has(k)) this.record.deletion.set(k, v) })
+        this.record.update.forEach(([v], k) => this.record.deletion.set(k, v))
+        this.record.addition.clear()
+        this.record.update.clear()
         return super.clear()
     }
     delete(key: K): boolean {
         if (this.has(key)) {
-            if (this.record.added.has(key)) {
-                this.record.added.delete(key)
+            if (this.record.addition.has(key)) {
+                this.record.addition.delete(key)
             } else {
-                const updated = this.record.updated.get(key)
+                const updated = this.record.update.get(key)
                 if (updated) {
-                    this.record.removed.set(key, updated[0])
+                    this.record.deletion.set(key, updated[0])
                 } else {
-                    this.record.removed.set(key, this.get(key)!)
+                    this.record.deletion.set(key, this.get(key)!)
                 }
             }
         }
@@ -40,79 +40,111 @@ export class RecordedMap<K, V> extends Map<K, V> {
     }
     set(key: K, value: V): this {
         if (this.has(key)) {
-            if (this.record.added.has(key)) {
-                this.record.added.set(key, value)
+            if (this.record.addition.has(key)) {
+                this.record.addition.set(key, value)
             } else {
-                const updated = this.record.updated.get(key)
+                const updated = this.record.update.get(key)
                 if (updated) {
-                    this.record.updated.set(key, [updated[0], value])
+                    this.record.update.set(key, [updated[0], value])
                 } else {
-                    this.record.updated.set(key, [this.get(key)!, value])
+                    this.record.update.set(key, [this.get(key)!, value])
                 }
             }
         } else {
-            const removed = this.record.removed.get(key)
+            const removed = this.record.deletion.get(key)
             if (removed) {
                 if (removed !== value)
-                    this.record.updated.set(key, [this.record.removed.get(key)!, value])
-                this.record.removed.delete(key)
+                    this.record.update.set(key, [this.record.deletion.get(key)!, value])
+                this.record.deletion.delete(key)
             } else {
-                this.record.added.set(key, value)
+                this.record.addition.set(key, value)
             }
         }
         return super.set(key, value)
     }
 
-    get record(): RecordedMapActions<K, V> {
+    get record(): MapDiff<K, V> {
         if (!this._actions) {
             this._actions = {
-                added: new Map(),
-                removed: new Map(),
-                updated: new Map(),
+                addition: new Map(),
+                deletion: new Map(),
+                update: new Map(),
             }
         }
         return this._actions
     }
-    pop(): RecordedMapActions<K, V> {
+    pop(): MapDiff<K, V> {
         const res = this.record
         this._actions = undefined
         return res
     }
 }
-
-export class RecordedSet<T> extends Set<T> {
-    private _actions?: RecordedSetActions<T>
+export class DiffRecordedSet<T> extends Set<T> {
+    private _actions?: SetDiff<T>
 
     add(value: T): this {
         if (!this.has(value)) {
-            this.record.added.add(value)
+            this.record.addition.add(value)
         }
         return super.add(value)
     }
     clear(): void {
-        setAdd(this.record.removed, setSubtract(this, this.record.added))
+        setAdd(this.record.deletion, setSubtract(this, this.record.addition))
         return super.clear()
     }
     delete(value: T): boolean {
         if (this.has(value)) {
-            if (this.record.added.has(value)) {
-                this.record.added.delete(value)
+            if (this.record.addition.has(value)) {
+                this.record.addition.delete(value)
             } else {
-                this.record.removed.add(value)
+                this.record.deletion.add(value)
             }
         }
         return super.delete(value)
     }
 
-    get record(): RecordedSetActions<T> {
+    get record(): SetDiff<T> {
         if (!this._actions) {
             this._actions = {
-                added: new Set(),
-                removed: new Set(),
+                addition: new Set(),
+                deletion: new Set(),
             }
         }
         return this._actions
     }
+}
+
+export function twoMapsDiff<K, V>(
+    map0: Map<K, V>,
+    map1: Map<K, V>,
+    comparator: (prev: V, curr: V) => boolean = (prev, curr) => prev === curr
+): MapDiff<K, V> {
+    const addition = new Map<K, V>()
+    const deletion = new Map<K, V>()
+    const update = new Map<K, [V, V]>()
+    map1.forEach((curr, k) => {
+        const prev = map0.get(k)
+        if (prev === undefined) {
+            addition.set(k, curr)
+        } else if (!comparator(prev, curr)) {
+            update.set(k, [prev, curr])
+        }
+    })
+    map0.forEach((v, k) => {
+        if (!map1.has(k)) {
+            deletion.set(k, v)
+        }
+    })
+    return { addition, deletion, update }
+}
+
+export function twoSetsDiff<T>(
+    set0: Set<T>,
+    set1: Set<T>
+): SetDiff<T> {
+    const addition = twoSetSubtract(set1, set0)
+    const deletion = twoSetSubtract(set0, set1)
+    return { addition, deletion }
 }
 
 export class TwoWayMap<K, V> extends Map<K, V> {

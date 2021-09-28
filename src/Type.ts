@@ -20,6 +20,10 @@ export type ViewportUpdate = {
     viewport: Viewport
     animation?: AnimationOptions
 }
+export type SizedViewport = {
+    size: PlaneVector,
+    viewport: Viewport,
+}
 
 export interface AnimationOptions {
     duration: number,

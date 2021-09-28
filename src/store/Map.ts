@@ -1,6 +1,6 @@
-import { BehaviorSubject, distinctUntilChanged, map, MonoTypeOperatorFunction, Observer, OperatorFunction, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
+import { BehaviorSubject, combineLatest, combineLatestWith, distinctUntilChanged, map, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
 
-import { EventButtonType, PlaneRect, PlaneVector, Viewport, ViewportUpdate } from "../Type"
+import { EventButtonType, PlaneRect, PlaneVector, SizedViewport, Viewport, ViewportUpdate } from "../Type"
 import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils"
 import { mainPanelSize$ } from "../intent/MainPanel"
@@ -14,6 +14,11 @@ export const viewportUpdate$ = viewportUpdateSubject
     )
 
 export const viewport$ = viewportUpdate$.pipe(map(({ viewport }) => viewport))
+export const sizedViewport$: Observable<SizedViewport> = mainPanelSize$
+    .pipe(
+        combineLatestWith(viewport$),
+        map(([size, viewport]) => ({ size, viewport }))
+    )
 
 export const position$ = viewport$
     .pipe(
