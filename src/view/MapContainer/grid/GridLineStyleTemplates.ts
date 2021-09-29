@@ -1,5 +1,5 @@
 import { GridData, GridLineData } from "./GridData"
-import { GridLineGraphicsStyle, GridLineTemplateStyle } from "./GridLineGraphics"
+import { GridLineGraphicsStyle } from "./GridLineGraphics"
 
 enum StyleType {
     AxisLine,
@@ -9,7 +9,7 @@ enum StyleType {
 }
 
 const labelOffset = 32
-const styleTemplates: Record<StyleType, GridLineTemplateStyle> = {
+const styleTemplates: Record<StyleType, GridLineGraphicsStyle> = {
     [StyleType.AxisLine]: {
         width: 4,
         color: 0x888888,

@@ -1,4 +1,4 @@
-import { boundedNumber } from "."
+import { numberBounded } from "."
 import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf, PlaneAxis } from "../Type"
 import { initArray, init2dArray, map2dArray } from "./collection"
 
@@ -16,7 +16,7 @@ export function vectorAbs<V extends NumTuple<number>>(vector: V): V {
     return vector.map(Math.abs) as V
 }
 export function vectorBounded<V extends NumTuple<number>>(lower: number, upper: number, vector: V): V {
-    return vector.map(v => boundedNumber(lower, upper, v)) as V
+    return vector.map(v => numberBounded(lower, upper, v)) as V
 }
 export function vectorPlus<V extends NumTuple<number>>(v0: V, ...vectors: V[]): V {
     return vectors.reduce((sum, v) => v.map((n, i) => sum[i] + n) as V, v0)

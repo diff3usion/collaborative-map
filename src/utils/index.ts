@@ -56,7 +56,10 @@ export const nearestSmallerPowerOf2 = (n: number) =>
 export const pointToVector: (p: Point) => PlaneVector
     = p => [p.x, p.y]
 
-export function boundedNumber(lower: number, upper: number, n: number): number {
+export function twoNumbersSameSign(n0: number, n1: number): boolean {
+    return n0 > 0 && n1 > 0 || n0 < 0 && n1 < 0
+}
+export function numberBounded(lower: number, upper: number, n: number): number {
     return Math.max(lower, Math.min(upper, n))
 }
 

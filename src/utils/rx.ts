@@ -1,7 +1,8 @@
 import { InteractionEvent } from "pixi.js"
-import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, startWith, Subject, Subscription, switchMap, window, withLatestFrom } from "rxjs"
+import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, share, startWith, Subject, Subscription, switchMap, takeWhile, timer, window, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
-import { EventButtonType, PlaneVector, Viewport } from "../Type"
+import { EventButtonType, PlaneVector, TupleOf, Viewport } from "../Type"
+import { Transition } from "./transition"
 
 type ExtractObservableArray<T extends Array<Observable<any>>> =
     { [K in keyof T]: T[K] extends Observable<infer V> ? V : never }
@@ -105,4 +106,20 @@ export function windowEachStartWith<T>(signal: Observable<any>, value: T): MonoT
         window(signal),
         switchMap(startWith(value)),
     )
+}
+
+export function splitObservable<P, Q>(obs: Observable<[P, Q]>): [Observable<P>, Observable<Q>] {
+    const shared = obs.pipe(share())
+    return [shared.pipe(map(([p]) => p)), shared.pipe(map(([_, q]) => q))]
+}
+
+export function transitionTimerSubscription(transition: Transition<any>, targetFps = 60): Subscription {
+    return timer(0, 1000 / targetFps)
+        .pipe(
+            takeWhile(() => transition.ticking),
+            map(_ => Date.now()),
+            pairwise(),
+            map(([prevTime, currTime]) => currTime - prevTime),
+        )
+        .subscribe(dt => transition.tick(dt))
 }

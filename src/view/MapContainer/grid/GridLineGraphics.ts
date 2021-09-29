@@ -3,16 +3,12 @@ import { PlaneAxis, PlaneVector } from "../../../Type"
 import { someDiffProperties } from "../../../utils"
 import { GridLineData } from "./GridData"
 
-export type GridLineTemplateStyle = {
+export type GridLineGraphicsStyle = {
     width: number
     color: number
     alpha: number
-}
-export type GridLineDynamicStyle = {
-    dimming?: number,
     label?: string
 }
-export type GridLineGraphicsStyle = GridLineTemplateStyle & GridLineDynamicStyle
 export type GridLineGraphicsData = GridLineData & GridLineGraphicsStyle
 export type GridLineGraphicsState = {
     graphics: Graphics
@@ -66,9 +62,8 @@ function refreshText(
 function refreshAlpha(
     line: GridLineGraphics,
 ): void {
-    const { graphics, alpha, dimming } = line
-    const res = dimming ? dimming * alpha : alpha
-    graphics.alpha = res
+    const { graphics, alpha } = line
+    graphics.alpha = alpha
 }
 
 export function updateGridLineGraphics(
@@ -77,7 +72,7 @@ export function updateGridLineGraphics(
 ): void {
     const needDraw = someDiffProperties(line, data, ['label', 'length', 'color', 'width'])
     const needMove = needDraw || someDiffProperties(line, data, ['position'])
-    const needRefreshAlpha = needDraw || someDiffProperties(line, data, ['alpha', 'dimming'])
+    const needRefreshAlpha = needDraw || someDiffProperties(line, data, ['alpha'])
     const needRefreshText = someDiffProperties(line, data, ['label'])
     Object.assign(line, data)
     if (needMove) move(line)

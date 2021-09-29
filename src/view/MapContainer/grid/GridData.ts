@@ -1,5 +1,5 @@
 import { PlaneAxis, PlaneVector, SizedViewport, Viewport, } from "../../../Type"
-import { boundedNumber, nearestSmallerPowerOf2 } from "../../../utils"
+import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils"
 import { initArray, Diff, twoMapsDiff } from "../../../utils/collection"
 import { positionShift } from "../../../utils/geometry"
 
@@ -27,7 +27,7 @@ function sizeToGridLineGap(
     size: PlaneVector,
     scale: number,
 ): number {
-    return boundedNumber(
+    return numberBounded(
         minLineGap,
         maxLineGap,
         Math.min(...size.map(s => nearestSmallerPowerOf2(s / scale / desiredLineCount)))
@@ -85,7 +85,7 @@ export function initGridData(
         gap,
     }
 }
-export function diffGridMaps(
+export function gridMapsDiff(
     data0: GridMaps,
     data1: GridMaps,
 ): GridMapsDiff {

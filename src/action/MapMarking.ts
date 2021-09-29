@@ -3,9 +3,9 @@ import { markingTypeDropdownKeyMap } from "../Constant";
 import { markingTypeControlSelectedOption$ } from "../intent/Control";
 import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../intent/Map";
 import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
-import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, viewportFocusRect, viewportUpdateObserver } from "../store/Map";
+import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, viewportFocusRect } from "../store/Map";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
-import { MapMarkingStage, PlaneVector, ViewportUpdate } from "../Type";
+import { MapMarkingStage, PlaneVector } from "../Type";
 import { eventToPosition, eventToTargetRelativePosition } from "../utils";
 import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
 import { distinctPlaneVector, switchToLastestFrom, windowEachStartWith } from "../utils/rx";
@@ -138,7 +138,6 @@ confirmedPoints$
             return scaleRectWithMinSize(fitted, 1.2, rectCenter(fitted), 16)
         }),
         viewportFocusRect(),
-        map(viewport => ({ viewport, animation: { duration: 200 } }) as ViewportUpdate),
     )
-    .subscribe(viewportUpdateObserver)
+    .subscribe(viewport$)
 //#endregion

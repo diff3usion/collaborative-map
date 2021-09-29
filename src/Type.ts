@@ -20,10 +20,10 @@ export type Viewport = {
     position: PlaneVector
     scale: number
 }
-export type ViewportUpdate = {
-    viewport: Viewport
-    animation?: AnimationOptions
-}
+// export type ViewportUpdate = {
+//     viewport: Viewport
+//     animation?: AnimationOptions
+// }
 export type SizedViewport = {
     size: PlaneVector,
     viewport: Viewport,

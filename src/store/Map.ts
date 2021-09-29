@@ -1,19 +1,20 @@
 import { BehaviorSubject, combineLatest, combineLatestWith, distinctUntilChanged, map, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, shareReplay, Subject, withLatestFrom } from "rxjs"
 
-import { EventButtonType, PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport, ViewportUpdate } from "../Type"
+import { EventButtonType, PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport } from "../Type"
 import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils"
 import { mainPanelSize$ } from "../intent/MainPanel"
 import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
 
-const viewportUpdateSubject = new BehaviorSubject<ViewportUpdate>({ viewport: { position: [0, 0], scale: 1 } })
-export const viewportUpdateObserver: Observer<ViewportUpdate> = viewportUpdateSubject
-export const viewportUpdate$ = viewportUpdateSubject
-    .pipe(
-        shareReplay(1)
-    )
+// const viewportUpdateSubject = new BehaviorSubject<ViewportUpdate>({ viewport: { position: [0, 0], scale: 1 } })
+// export const viewportUpdateObserver: Observer<ViewportUpdate> = viewportUpdateSubject
+// export const viewportUpdate$ = viewportUpdateSubject
+//     .pipe(
+//         shareReplay(1)
+//     )
 
-export const viewport$ = viewportUpdate$.pipe(map(({ viewport }) => viewport))
+// export const viewport$ = viewportUpdate$.pipe(map(({ viewport }) => viewport))
+export const viewport$ = new BehaviorSubject<Viewport>({ position: [0, 0], scale: 1 })
 export const sizedViewport$: Observable<SizedViewport> = mainPanelSize$
     .pipe(
         combineLatestWith(viewport$),

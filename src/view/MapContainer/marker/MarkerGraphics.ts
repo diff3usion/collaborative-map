@@ -3,9 +3,9 @@ import { Observable, Observer, Subscription } from "rxjs"
 import { markingContainer } from "./Marking"
 import { PlaneVector, Viewport } from "../../../Type"
 import { planeVectorShift, vectorAbs, vectorMinus } from "../../../utils/geometry"
-import { viewportUpdate$ } from "../../../store/Map"
 import { TransitionTicker } from "../../../utils/animation"
-import { vectorArrayTransition, linear } from "../../../utils/transition"
+import { transitionArray, linear, transitionVector } from "../../../utils/transition"
+import { viewport$ } from "../../../store/Map"
 
 const transitionFrames = 12
 
@@ -46,7 +46,7 @@ export abstract class MarkerGraphics {
                     duration: transitionFrames,
                     from,
                     to: this.shiftedVectors,
-                    fn: vectorArrayTransition(linear),
+                    fn: transitionArray(transitionVector(linear)),
                     apply: p => {
                         this.g.position.set(...this.position(p))
                         this.draw(...p)
@@ -77,9 +77,9 @@ export abstract class MarkerGraphics {
     }
     protected constructor(...vectors: PlaneVector[]) {
         this.vectors = vectors
-        this.observe(viewportUpdate$, ({ viewport, animation }) => {
+        this.observe(viewport$, (viewport) => {
             this.viewport = viewport
-            const from = animation && this.shiftedVectors ? this.shiftedVectors : undefined
+            const from = undefined
             this.shiftedVectors = vectors.map(v => this.shift(v))
             this.move(from)
         })
