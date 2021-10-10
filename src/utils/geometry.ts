@@ -1,4 +1,4 @@
-import { numberBounded } from "."
+import { numberBounded } from "./math"
 import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf, PlaneAxis } from "../Type"
 import { initArray, init2dArray, map2dArray } from "./collection"
 

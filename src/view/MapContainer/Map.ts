@@ -4,7 +4,6 @@ import { MapRegion } from "../../model/"
 import { viewport$ } from "../../store/Map"
 import { RenderedRegion$ } from "../../store/MapData"
 import { PlaneVector } from "../../Type"
-import { pointToVector } from "../../utils"
 import { TransitionTicker } from "../../utils/animation"
 import { linear, transitionVector } from "../../utils/transition"
 

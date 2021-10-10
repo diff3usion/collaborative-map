@@ -3,10 +3,11 @@ import { canvasWheel$, canvasPointerMove$, mainButtonDown$ } from "../intent/Map
 import { viewport$, scale$, canvasPointersCurrentlyDown$, filterPointerDownCount, filterSinglePointerIsDown } from "../store/Map"
 import { filterIsExploreMode } from "../store/MapExplore"
 import { PlaneVector, TupleOf, Viewport } from "../Type"
-import { numberBounded, eventToPosition, twoNumbersSameSign } from "../utils"
+import { eventToPosition } from "../utils/event"
 import { scaleWithFixedPoint, vectorDist, vectorMean, vectorMinus, vectorNorm } from "../utils/geometry"
-import { distinctPlaneVector, distinctViewport, filterWithLatestFrom, transitionTimerSubscription, windowPairwise } from "../utils/rx"
+import { distinctPlaneVector, distinctViewport, filterWithLatestFrom, transitionObservable, transitionObserver, transitionTimer, windowPairwise } from "../utils/rx"
 import { linear, Transition, transitionViewport, TransitionOptions } from "../utils/transition"
+import { twoNumbersSameSign, numberBounded } from "../utils/math"
 
 const maxScale = 64
 const minScale = 1 / 8
@@ -167,13 +168,6 @@ const pinchZoomViewport$ = pinchZoomData$
 //#endregion
 
 //#region Smoothen
-const continuousViewport$: Observable<Viewport> =
-    merge(
-        pointerPanViewport$,
-        pinchPanViewport$,
-        pinchZoomViewport$,
-    )
-
 const viewportTransition$ = new Subject<Transition<Viewport>>()
 const viewportIntermediate$ = new Subject<Observable<Viewport>>()
 function withLatestTickingTransition<T>(): OperatorFunction<T, [T, Transition<Viewport>]> {
@@ -188,30 +182,45 @@ function filterLatestTransitionNotTicking<T>(): MonoTypeOperatorFunction<T> {
         prevTransition => !prevTransition || !prevTransition.ticking
     )
 }
+const continuousViewport$: Observable<Viewport> =
+    merge(
+        pointerPanViewport$,
+        pinchPanViewport$,
+        pinchZoomViewport$,
+    )
+continuousViewport$
+    .pipe(
+        withLatestTickingTransition(),
+    )
+    .subscribe(([_, transition]) => {
+        transition.complete()
+    })
 
 const wheelZoomViewportTransitionOptions: TransitionOptions<Viewport> = {
     duration: 200,
     fn: transitionViewport(linear),
 }
 const wheelZoomViewportTransitionTargetFps = 120
-wheelZoomViewport$
+const wheelZoomViewportTransition$ = wheelZoomViewport$
     .pipe(
         filterLatestTransitionNotTicking(),
         withLatestFrom(viewport$),
-    )
-    .subscribe(([to, from]) => {
-        const intermediate$ = new Subject<Viewport>()
-        const transition = new Transition<Viewport>({
+        map(([to, from]) => new Transition<Viewport>({
             ...wheelZoomViewportTransitionOptions,
             from, to,
-            apply: vp => intermediate$.next(vp),
-            complete: () => intermediate$.complete()
-        })
-        transitionTimerSubscription(transition.start(), wheelZoomViewportTransitionTargetFps)
-        viewportIntermediate$.next(intermediate$)
-        viewportTransition$.next(transition)
-    })
-
+            apply: () => { }
+        })),
+        tap(transition => transitionTimer(transition.start(), wheelZoomViewportTransitionTargetFps)
+            .subscribe(transitionObserver(transition))),
+        share(),
+    )
+wheelZoomViewportTransition$
+    .subscribe(viewportTransition$)
+wheelZoomViewportTransition$
+    .pipe(
+        map(transitionObservable),
+    )
+    .subscribe(viewportIntermediate$)
 wheelZoomViewport$
     .pipe(
         withLatestTickingTransition(),
@@ -221,13 +230,6 @@ wheelZoomViewport$
             ...wheelZoomViewportTransitionOptions,
             to,
         })
-    })
-continuousViewport$
-    .pipe(
-        withLatestTickingTransition(),
-    )
-    .subscribe(([_, transition]) => {
-        transition.complete()
     })
 
 const smoothenedViewport$ = viewportIntermediate$

@@ -1,5 +1,3 @@
-import "./"
-
 export type MapDiff<K, V> = {
     addition: Map<K, V>
     deletion: Map<K, V>

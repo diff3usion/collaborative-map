@@ -1,5 +1,5 @@
 import { PlaneAxis, PlaneVector, SizedViewport, Viewport, } from "../../../Type"
-import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils"
+import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils/math"
 import { initArray, Diff, twoMapsDiff } from "../../../utils/collection"
 import { positionShift } from "../../../utils/geometry"
 

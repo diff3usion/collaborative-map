@@ -1,5 +1,6 @@
-import { numberBounded } from "."
+import { numberBounded } from "./math"
 import { AnimationOptions, NumTuple, Viewport } from "../Type"
+import { binaryOperatorWithArgs } from "./object"
 
 export type TransitionFn<T> = (from: T, to: T, t: number) => T
 export type TransitionFunction = TransitionFn<number>
@@ -7,15 +8,6 @@ export type TransitionFunction = TransitionFn<number>
 export const linear = (from: number, to: number, t: number) =>
     from + (to - from) * numberBounded(0, 1, t)
 
-export function transitionObject<T extends Object>(
-    fns: { [K in keyof T]: TransitionFn<T[K]> },
-): TransitionFn<T> {
-    return (from: T, to: T, t: number) =>
-        (Object.keys(from) as (keyof T)[]).reduce((obj: T, key: keyof T) => {
-            obj[key] = fns[key](from[key], to[key], t)
-            return obj
-        }, { ...from })
-}
 export function transitionArray<T>(
     fn: TransitionFn<T>,
 ): TransitionFn<T[]> {
@@ -28,6 +20,9 @@ export function transition2dArray<T>(
 }
 export const transitionVector
     = transitionArray as <V extends NumTuple<number>>(fn: TransitionFunction) => TransitionFn<V>
+export const transitionObject: <T extends Object>(
+    fns: { [K in keyof T]: TransitionFn<T[K]> },
+) => TransitionFn<T> = binaryOperatorWithArgs
 export function transitionViewport(
     fn: TransitionFunction
 ): TransitionFn<Viewport> {
@@ -46,7 +41,7 @@ export type TransitionAction<T> = {
     complete?: () => void
 }
 export type TransitionData<T> = TransitionOptions<T> & TransitionPath<T> & TransitionAction<T>
-export type TransitionRevisedData<T> = Partial<Omit<TransitionData<T>, 'from' | 'apply'>>
+export type TransitionRevisedData<T> = Partial<Omit<TransitionData<T>, 'from'>>
 export type TransitionState<T> = {
     started: boolean
     completed: boolean

@@ -1,7 +1,7 @@
 import { InteractionEvent } from "pixi.js"
-import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, share, startWith, Subject, Subscription, switchMap, takeWhile, timer, window, withLatestFrom } from "rxjs"
+import { combineLatestWith, distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, share, startWith, Subject, Subscription, switchMap, take, takeWhile, timer, window, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
-import { EventButtonType, PlaneVector, TupleOf, Viewport } from "../Type"
+import { EventButtonType, PlaneVector, Viewport } from "../Type"
 import { Transition } from "./transition"
 
 type ExtractObservableArray<T extends Array<Observable<any>>> =
@@ -66,6 +66,12 @@ export function switchToLastestFrom<T, F>(to: Observable<T>): OperatorFunction<F
         map(([_, v]) => v),
     )
 }
+export function switchTo<T, F>(to: Observable<T>): OperatorFunction<F, T> {
+    return from => from.pipe(
+        combineLatestWith(to),
+        map(([_, v]) => v),
+    )
+}
 export function mapToOnSignal<T>(to: T, signal: Observable<any>): MonoTypeOperatorFunction<T> {
     return from => from.pipe(
         withLatestFrom(signal),
@@ -113,7 +119,10 @@ export function splitObservable<P, Q>(obs: Observable<[P, Q]>): [Observable<P>, 
     return [shared.pipe(map(([p]) => p)), shared.pipe(map(([_, q]) => q))]
 }
 
-export function transitionTimerSubscription(transition: Transition<any>, targetFps = 60): Subscription {
+export function transitionTimer(
+    transition: Transition<any>,
+    targetFps = 60,
+): Observable<number> {
     return timer(0, 1000 / targetFps)
         .pipe(
             takeWhile(() => transition.ticking),
@@ -121,5 +130,33 @@ export function transitionTimerSubscription(transition: Transition<any>, targetF
             pairwise(),
             map(([prevTime, currTime]) => currTime - prevTime),
         )
-        .subscribe(dt => transition.tick(dt))
+}
+
+export function transitionObservable<T>(
+    transition: Transition<T>,
+): Observable<T> {
+    const res$ = new Subject<T>()
+    const oldApply = transition.options.apply
+    const oldComplete = transition.options.complete
+    transition.revise({
+        apply: value => {
+            oldApply(value)
+            res$.next(value)
+        },
+        complete: () => {
+            if (oldComplete) oldComplete()
+            res$.complete()
+        },
+    })
+    return res$
+}
+
+export function transitionObserver(
+    transition: Transition<any>,
+): Observer<number> {
+    return {
+        next: transition.tick.bind(transition),
+        complete: transition.complete.bind(transition),
+        error: console.error
+    }
 }

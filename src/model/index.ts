@@ -130,7 +130,7 @@ const isZipFile: (file: File) => boolean
 
 import json from './map/renderer/map_color_table.json'
 import { isPointInRect } from "../utils/geometry";
-import { bytesToNumber } from "../utils";
+import { bytesToNumber } from "../utils/math";
 import { initArray } from "../utils/collection";
 import { imageDataToBase64Url } from "../utils/dom";
 loadMcMapColorTable(JSON.stringify(json))

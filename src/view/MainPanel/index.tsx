@@ -40,6 +40,7 @@ export const markerEditer = () => (
 )
 
 export const MainPanel = () => {
+    const [f, setF] = useState();
     const panel = useResizeObservedRef<HTMLDivElement>(mainPanelResizeObserverEntry$)
     const currentControlMode = useBehaviorSubjectAsState(controlMode$)
     const currentMarkingMode = useBehaviorSubjectAsState(markingMode$)

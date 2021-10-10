@@ -2,7 +2,7 @@ import { BehaviorSubject, combineLatest, combineLatestWith, distinctUntilChanged
 
 import { EventButtonType, PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport } from "../Type"
 import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
-import { globalToRelativePosition, relativeToGlobalPosition } from "../utils"
+import { globalToRelativePosition, relativeToGlobalPosition } from "../utils/event"
 import { mainPanelSize$ } from "../intent/MainPanel"
 import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
 

@@ -2,7 +2,7 @@ import { Container } from 'pixi.js'
 import { filter, map, mapTo, mergeWith, Observable, pairwise, Subject, tap, withLatestFrom } from 'rxjs'
 import { confirmedPoints$, markingStage$, placedPoints$, tempPoint$ } from '../../../store/MapMarking'
 import { MapMarkingStage } from '../../../Type'
-import { filterWithLatestFrom, mergeWithSignalAs, partitionWithLatestFrom, switchToLastestFrom } from '../../../utils/rx'
+import { filterWithLatestFrom, mergeWithSignalAs, partitionWithLatestFrom } from '../../../utils/rx'
 import { mapToMarkingGraphicGroup as mapToMarkingGraphicsGroup, MarkingGraphicsGroup, MarkingGraphicsType } from './MarkingGraphicsGroup'
 
 export const markingContainer = new Container()
@@ -36,9 +36,6 @@ initedTempPoint$
 tempPointToUpdate$.pipe(
     withLatestFrom(tempPointGraphics$),
 )
-
-
-
 
 tempPoint$.pipe(
     withLatestFrom(placedPoints$),

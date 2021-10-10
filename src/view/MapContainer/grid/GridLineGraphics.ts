@@ -1,6 +1,6 @@
 import { Graphics, Text } from "pixi.js"
 import { PlaneAxis, PlaneVector } from "../../../Type"
-import { someDiffProperties } from "../../../utils"
+import { someDiffProperties } from "../../../utils/object"
 import { GridLineData } from "./GridData"
 
 export type GridLineGraphicsStyle = {

@@ -74,7 +74,7 @@ class TempRectGraphicGroup extends MarkingGraphicsGroup {
 class TempPolygonGraphicGroup extends MarkingGraphicsGroup {
     get graphics() {
         const v = this.vectors
-        const closingIntersect = v.length >= 4 && segmentIntersectPath([v[0], v[v.length - 1]], v) !== -1
+        const closingIntersect = v.length >= 4 && segmentIntersectPath([v[0], v[v.length - 1]], v) == -1
         const res: MarkerGraphics[] = []
         if (v.length > 1) {
             res.push(new TempPolygonBorder(v[v.length - 2], v[v.length - 1]))

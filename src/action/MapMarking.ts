@@ -6,9 +6,10 @@ import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "
 import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, viewportFocusRect } from "../store/Map";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
 import { MapMarkingStage, PlaneVector } from "../Type";
-import { eventToPosition, eventToTargetRelativePosition } from "../utils";
+import { eventToPosition } from "../utils/event";
 import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
 import { distinctPlaneVector, switchToLastestFrom, windowEachStartWith } from "../utils/rx";
+import { eventToTargetRelativePosition } from "../utils/pixi";
 
 function filterMayDrawNewPoint<T>(): MonoTypeOperatorFunction<T> {
     return ob => ob.pipe(

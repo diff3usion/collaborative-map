@@ -1,5 +1,5 @@
 import { Ticker, DisplayObject, TickerCallback, Graphics, Container } from "pixi.js"
-import { pickProperties } from "."
+import { pickProperties } from "./object"
 import { AnimationOptions, PlaneVector } from "../Type"
 import { Transition, TransitionRevisedData, TransitionData, linear, TransitionOptions } from "./transition"
 

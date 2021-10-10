@@ -7,7 +7,7 @@ import { vectorRound } from "../utils/geometry"
 import { mapToRelativePosition, cursorRelativePosition$, cursorRoundedRelativePosition$, rendererCursorStyle$, canvasPointersCurrentlyDown$ } from "../store/Map"
 import { controlMode$ } from "../store/MapControl"
 import { map, withLatestFrom, merge, tap, Subject } from "rxjs"
-import { eventToPosition } from "../utils"
+import { eventToPosition } from "../utils/event"
 
 //#region Default Cursor Style for Control Modes
 controlMode$
