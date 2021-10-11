@@ -1,13 +1,15 @@
-import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$, canvasPointerUpOutside$ } from "../intent/Map"
-import { locationOfPosition } from "../model/"
+import { map, withLatestFrom, merge, tap } from "rxjs"
 import { controlModeCursorStyles } from "../Constant"
-import { distinctPlaneVector, filterWithLatestFrom, observeEvent } from "../utils/rx"
-import { cursorLocation$ } from "../store/MapData"
+import { distinctPlaneVector, filterWithLatestFrom, scanInitializedWithLatestFrom } from "../utils/rx"
 import { vectorRound } from "../utils/geometry"
-import { mapToRelativePosition, cursorRelativePosition$, cursorRoundedRelativePosition$, rendererCursorStyle$, canvasPointersCurrentlyDown$ } from "../store/Map"
-import { controlMode$ } from "../store/MapControl"
-import { map, withLatestFrom, merge, tap, Subject } from "rxjs"
 import { eventToPosition } from "../utils/event"
+
+import { locationOfPosition } from "../model/"
+import { documentPointerUp$ } from "../intent"
+import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$, canvasPointerUpOutside$ } from "../intent/Map"
+import { mapToRelativePosition, cursorRelativePosition$, cursorRoundedRelativePosition$, rendererCursorStyle$, canvasPointersCurrentlyDown$, canvasPointersCurrentlyDownIdMap$, canvasPointersDownAndMoved$ } from "../store/Map"
+import { controlMode$ } from "../store/MapControl"
+import { cursorLocation$ } from "../store/MapData"
 
 //#region Default Cursor Style for Control Modes
 controlMode$
@@ -34,23 +36,33 @@ cursorRoundedRelativePosition$
     .subscribe(cursorLocation$)
 //#endregion
 
-//#region Cursor Down Status
+//#region Cursor Currently Down
 canvasPointerDown$
     .pipe(
         withLatestFrom(canvasPointersCurrentlyDown$),
-        map(([event, isDown]) => [...isDown, event])
+        map(([event, down]) => [...down, event]),
     )
     .subscribe(canvasPointersCurrentlyDown$)
 merge(canvasPointerUp$, canvasPointerUpOutside$)
     .pipe(
         withLatestFrom(canvasPointersCurrentlyDown$),
-        map(([event, isDown]) => isDown.filter(e => e.pointerId !== event.pointerId))
+        map(([event, down]) => down.filter(e => e.pointerId !== event.pointerId)),
     )
     .subscribe(canvasPointersCurrentlyDown$)
 //#endregion
 
-const documentPointerUp$ = new Subject<PointerEvent>()
-observeEvent(document, 'pointerup', documentPointerUp$)
+//#region Cursor Down and Moved
+canvasPointerMove$
+    .pipe(
+        filterWithLatestFrom(canvasPointersCurrentlyDownIdMap$, (down, event) => down.has(event.pointerId)),
+        scanInitializedWithLatestFrom(
+            canvasPointersCurrentlyDown$,
+            (cumu, event) => [...cumu.filter(e => e.pointerId !== event.pointerId), event],
+        ),
+    )
+    .subscribe(canvasPointersDownAndMoved$)
+//#endregion
+
 documentPointerUp$
     .pipe(
         filterWithLatestFrom(canvasPointersCurrentlyDown$, down => down.length > 0)

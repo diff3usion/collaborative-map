@@ -1,15 +1,19 @@
 import { ChangeEvent, useEffect } from 'react'
 import { Subject } from 'rxjs'
-import * as PIXI from "pixi.js";
 import Layout from 'antd/lib/layout/layout'
 
+import { documentKeyPress$, documentPointerUp$ } from './intent';
+import { observeEvent } from './utils/rx';
 import { HeadBar } from './view/HeadBar'
 import { MainPanel } from './view/MainPanel'
 import { SidePanel } from './view/SidePanel'
 import './App.css'
 import config from './config.json'
 
-import("./action")
+import "./action"
+
+observeEvent(document, 'keypress', documentKeyPress$)
+observeEvent(document, 'pointerup', documentPointerUp$)
 
 const openTexturePackFile = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target!.files![0])
@@ -40,7 +44,5 @@ const App = () => {
 
 export const TexturePackZipFile$ = new Subject<File>()
 export const VoxelRegionZipFiles$ = new Subject<FileList>()
-
-// import("./model/map")
 
 export default App

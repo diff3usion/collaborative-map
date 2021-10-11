@@ -204,9 +204,17 @@ export function map2dArray<T, F>(arr: T[][], producer: (val: T, row: number, col
 export function initMap<K, V>(arr: K[], mapper: (key: K) => V): Map<K, V> {
     return new Map(arr.map(k => [k, mapper(k)]))
 }
+export function initMapPluck<V, P extends keyof V>(arr: V[], prop: P): Map<V[P], V> {
+    return new Map(arr.map(k => [k[prop], k]))
+}
 export function mapMap<K, V, T, F>(map: Map<K, V>, mapper: (k: K, v: V) => [T, F]): Map<T, F> {
     const res = new Map<T, F>()
     map.forEach((v, k) => res.set(...mapper(k, v)))
+    return res
+}
+export function mapPluck<K, V, P extends keyof V>(map: Map<K, V>, prop: P): Map<K, V[P]> {
+    const res = new Map<K, V[P]>()
+    map.forEach((v, k) => res.set(k, v[prop]))
     return res
 }
 export function mapFilter<K, V>(map: Map<K, V>, predicate: (k: K, v: V) => boolean): Map<K, V> {

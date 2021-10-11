@@ -2,10 +2,10 @@
 
 import * as PIXI from "pixi.js"
 import { InteractionManager } from "pixi.js"
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 
 import { mainPanelSize$ } from "../../intent/MainPanel"
-import { useEventObserver } from '../../utils/hook'
+import { useEventObserver, useObservable, useResizeObserver } from '../../utils/hook'
 import { rendererCursorStyle$ } from "../../store/Map"
 import {
     canvasContextMenu$,
@@ -13,58 +13,58 @@ import {
     canvasPointerDown$,
     canvasPointerMove$,
     canvasPointerUp$,
+    canvasResizeObserverEntry$,
 } from "../../intent/Map"
 import { markingContainer } from "./marker/Marking"
 import { mapContainer } from "./Map"
 import { observeEvent } from "../../utils/rx"
-import { documentKeyPress$ } from "../../intent/Control"
 import { gridContainer } from "./grid/"
+import { PlaneVector } from "../../Type"
 
 PIXI.settings.FILTER_RESOLUTION = devicePixelRatio
 
-export const mapApp = new PIXI.Application({
-    backgroundColor: 0xB9D9EB,
-    resolution: devicePixelRatio,
-    autoDensity: true,
-    antialias: true,
-});
+export const MapContainer = () => {
+    const container = useRef<HTMLDivElement>(null)
+    const application = useMemo(
+        () => new PIXI.Application({
+            backgroundColor: 0xB9D9EB,
+            resolution: devicePixelRatio,
+            autoDensity: true,
+            antialias: true,
+        }),
+        [],
+    )
 
-mapApp.stage.sortableChildren = true
-mapApp.stage.addChild(mapContainer)
-mapApp.stage.addChild(gridContainer)
-mapApp.stage.addChild(markingContainer)
-
-const mapRendererInteraction = mapApp.renderer.plugins.interaction as InteractionManager
-mapRendererInteraction.moveWhenInside = true
-
-const setDefaultCursorMode: (cursorMode: string) => void
-    = cursorMode => {
-        mapRendererInteraction.cursorStyles.default = cursorMode
-        mapRendererInteraction.setCursorMode(cursorMode)
+    const canvas = () => application.view
+    const stage = () => application.stage
+    const renderer = () => application.renderer
+    const interaction = () => renderer().plugins.interaction as InteractionManager
+    const rendererResize = (size: PlaneVector) => renderer().resize(...size)
+    const setCursorMode = (cursorMode: string) => {
+        interaction().cursorStyles.default = cursorMode
+        interaction().setCursorMode(cursorMode)
+    }
+    const initApplication = () => {
+        stage().sortableChildren = true
+        stage().addChild(mapContainer)
+        stage().addChild(gridContainer)
+        stage().addChild(markingContainer)
+        interaction().moveWhenInside = true
     }
 
-rendererCursorStyle$.subscribe(setDefaultCursorMode)
-
-mainPanelSize$.subscribe(size => {
-    mapApp.renderer.resize(...size)
-})
-
-
-observeEvent(document, 'keypress', documentKeyPress$)
-
-export const MapContainer = () => {
-    const mapCanvas = useRef<HTMLCanvasElement>(mapApp.view)
-    const container = useRef<HTMLDivElement>(null)
-
-    useEventObserver(mapApp.view, 'contextmenu', canvasContextMenu$)
-    useEventObserver(mapApp.view, 'wheel', canvasWheel$)
-    useEventObserver(mapApp.view, 'pointermove', canvasPointerMove$)
-    useEventObserver(mapApp.view, 'pointerdown', canvasPointerDown$)
-    useEventObserver(mapApp.view, 'pointerup', canvasPointerUp$)
-
     useEffect(() => {
-        container.current!.appendChild(mapCanvas.current)
+        initApplication()
+        container.current!.appendChild(canvas())
     }, [])
+
+    useObservable(mainPanelSize$, rendererResize)
+    useObservable(rendererCursorStyle$, setCursorMode)
+    useResizeObserver(canvas, canvasResizeObserverEntry$)
+    useEventObserver(canvas, 'contextmenu', canvasContextMenu$)
+    useEventObserver(canvas, 'wheel', canvasWheel$)
+    useEventObserver(canvas, 'pointermove', canvasPointerMove$)
+    useEventObserver(canvas, 'pointerdown', canvasPointerDown$)
+    useEventObserver(canvas, 'pointerup', canvasPointerUp$)
 
     return (
         <div id="map-container" ref={container} />

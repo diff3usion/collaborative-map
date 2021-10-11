@@ -1,13 +1,14 @@
-import { map, window, withLatestFrom, switchMap, tap, filter, pairwise, scan, merge, Observable, OperatorFunction, Subject, startWith, share, MonoTypeOperatorFunction } from "rxjs"
-import { canvasWheel$, canvasPointerMove$, mainButtonDown$ } from "../intent/Map"
-import { viewport$, scale$, canvasPointersCurrentlyDown$, filterPointerDownCount, filterSinglePointerIsDown } from "../store/Map"
-import { filterIsExploreMode } from "../store/MapExplore"
+import { map, withLatestFrom, switchMap, tap, filter, pairwise, merge, Observable, OperatorFunction, Subject, startWith, share, MonoTypeOperatorFunction, combineLatestWith } from "rxjs"
 import { PlaneVector, TupleOf, Viewport } from "../Type"
 import { eventToPosition } from "../utils/event"
 import { scaleWithFixedPoint, vectorDist, vectorMean, vectorMinus, vectorNorm } from "../utils/geometry"
+import { twoNumbersSameSign, numberBounded } from "../utils/math"
 import { distinctPlaneVector, distinctViewport, filterWithLatestFrom, transitionObservable, transitionObserver, transitionTimer, windowPairwise } from "../utils/rx"
 import { linear, Transition, transitionViewport, TransitionOptions } from "../utils/transition"
-import { twoNumbersSameSign, numberBounded } from "../utils/math"
+
+import { canvasWheel$, canvasPointerMove$, mainButtonDown$, canvasSize$ } from "../intent/Map"
+import { viewport$, scale$, canvasPointersCurrentlyDown$, filterPointerDownCount, filterSinglePointerIsDown, canvasPointersDownAndMovedIdMap$, sizedViewport$ } from "../store/Map"
+import { filterIsExploreMode } from "../store/MapExplore"
 
 const maxScale = 64
 const minScale = 1 / 8
@@ -17,30 +18,17 @@ function initViewport(position: PlaneVector, scale: number): Viewport {
 }
 
 //#region Gesture
+type GestureEvent<T extends number> = TupleOf<PointerEvent, T>
 type GesturePosition<T extends number> = TupleOf<PlaneVector, T>
 type GesturePositionPair<T extends number> = [GesturePosition<T>, GesturePosition<T>]
-function collectGesturePositions(
-    acc: Map<number, PlaneVector>,
-    [event, down]: [PointerEvent, PointerEvent[]]
-): Map<number, PlaneVector> {
-    down.filter(e => !acc.has(e.pointerId))
-        .forEach(e => acc.set(e.pointerId, eventToPosition(e)))
-    if (!acc.has(event.pointerId)) return acc
-    acc.set(event.pointerId, eventToPosition(event))
-    return acc
-}
-const twoFingerGesture$: Observable<GesturePositionPair<2>> = canvasPointerMove$
+const twoFingerGesture$: Observable<GesturePositionPair<2>> = canvasPointersDownAndMovedIdMap$
     .pipe(
         filterIsExploreMode(),
         filterPointerDownCount(2),
-        window(canvasPointersCurrentlyDown$),
-        switchMap(ob => ob.pipe(
-            withLatestFrom(canvasPointersCurrentlyDown$),
-            scan(collectGesturePositions, new Map()),
-            filter(map => map.size === 2),
-            map(acc => Array.from(acc.entries()).sort(([id0], [id1]) => id0 - id1).map(([_, v]) => v) as GesturePosition<2>),
-            pairwise(),
-        )),
+        map(idMap => Array.from(idMap.entries()).sort(([id0], [id1]) => id0 - id1)),
+        map(sortedEntries => sortedEntries.map(([_, e]) => e) as GestureEvent<2>),
+        map(events => events.map(eventToPosition) as GesturePosition<2>),
+        windowPairwise(canvasPointersCurrentlyDown$),
     )
 //#endregion
 
@@ -244,4 +232,10 @@ const allViewport$: Observable<Viewport> =
     )
 allViewport$
     .subscribe(viewport$)
+ viewport$
+    .pipe(
+        combineLatestWith(canvasSize$),
+        map(([viewport, size]) => ({ size, viewport }))
+    )
+    .subscribe(sizedViewport$)
 //#endregion

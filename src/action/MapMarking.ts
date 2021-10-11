@@ -1,15 +1,16 @@
 import { distinctUntilChanged, map, tap, withLatestFrom, of, merge, share, scan, mapTo, OperatorFunction, MonoTypeOperatorFunction } from "rxjs";
 import { markingTypeDropdownKeyMap } from "../Constant";
-import { markingTypeControlSelectedOption$ } from "../intent/Control";
-import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../intent/Map";
-import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
-import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, viewportFocusRect } from "../store/Map";
-import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
 import { MapMarkingStage, PlaneVector } from "../Type";
 import { eventToPosition } from "../utils/event";
 import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
-import { distinctPlaneVector, switchToLastestFrom, windowEachStartWith } from "../utils/rx";
+import { distinctPlaneVector, mapToLastestFrom, windowEachStartWith } from "../utils/rx";
 import { eventToTargetRelativePosition } from "../utils/pixi";
+
+import { markingTypeControlSelectedOption$ } from "../intent/Control";
+import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../intent/Map";
+import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
+import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, mapToFittedviewport } from "../store/Map";
+import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
 
 function filterMayDrawNewPoint<T>(): MonoTypeOperatorFunction<T> {
     return ob => ob.pipe(
@@ -80,7 +81,7 @@ const addPlacedPointEvent$ =
         tempPointPointerUp$,
     ).pipe(
         filterMayDrawNewPoint(),
-        switchToLastestFrom(tempPointUpdateEvent$),
+        mapToLastestFrom(tempPointUpdateEvent$),
     )
 const addAction$ = addPlacedPointEvent$
     .pipe(
@@ -122,7 +123,7 @@ const markingEndEvent$ = endPointPointerUp$
     )
 markingEndEvent$
     .pipe(
-        switchToLastestFrom(placedPoints$),
+        mapToLastestFrom(placedPoints$),
     )
     .subscribe(confirmedPoints$)
 
@@ -138,7 +139,7 @@ confirmedPoints$
             const fitted = planeVectorsBoundingRect(vectors)
             return scaleRectWithMinSize(fitted, 1.2, rectCenter(fitted), 16)
         }),
-        viewportFocusRect(),
+        mapToFittedviewport(),
     )
     .subscribe(viewport$)
 //#endregion

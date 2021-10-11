@@ -1,9 +1,10 @@
 import { InteractionEvent } from "pixi.js"
-import { combineLatestWith, distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, share, startWith, Subject, Subscription, switchMap, take, takeWhile, timer, window, withLatestFrom } from "rxjs"
+import { combineLatestWith, distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, scan, share, startWith, Subject, Subscription, switchMap, take, takeWhile, timer, window, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
 import { EventButtonType, PlaneVector, Viewport } from "../Type"
 import { Transition } from "./transition"
 
+//#region General Filtering
 type ExtractObservableArray<T extends Array<Observable<any>>> =
     { [K in keyof T]: T[K] extends Observable<infer V> ? V : never }
 export const filterWithMultipleLatestFrom =
@@ -14,9 +15,9 @@ export const filterWithMultipleLatestFrom =
                 filter(([_, ...latestes]) => predicate(latestes as unknown as ExtractObservableArray<F>)),
                 map(([v]) => v)
             )
-
 export const filterThatLatestEquals = <F>(target$: Observable<F>) => (value: F) =>
     filterWithMultipleLatestFrom(target$)(([latest]) => latest === value)
+
 export function filterWithLatestFrom<T, F>(
     signal: Observable<T>,
     predicate: (s: T, v: F) => boolean
@@ -27,12 +28,12 @@ export function filterWithLatestFrom<T, F>(
         map(([v]) => v)
     )
 }
-export const filterByLatestSignal = <T>(signal: Observable<boolean>) =>
-    filterWithLatestFrom<boolean, T>(signal, s => s)
-
-export const filterByLatestSignalReversed = <T>(signal: Observable<boolean>) =>
-    filterWithLatestFrom<boolean, T>(signal, s => !s)
-
+export function filterByLatestSignal<T>(signal: Observable<boolean>): MonoTypeOperatorFunction<T> {
+    return filterWithLatestFrom<boolean, T>(signal, s => s)
+}
+export function filterByLatestSignalReversed<T>(signal: Observable<boolean>) {
+    return filterWithLatestFrom<boolean, T>(signal, s => !s)
+}
 export function partitionWithLatestFrom<T, F>(
     ob: Observable<F>,
     signal: Observable<T>,
@@ -41,17 +42,21 @@ export function partitionWithLatestFrom<T, F>(
     return partition(ob.pipe(withLatestFrom(signal)), ([v, s]) => predicate(s, v))
         .map(branch => branch.pipe(map(([v]) => v))) as [Observable<F>, Observable<F>]
 }
+//#endregion
 
-export const filterWithoutTarget = () => filter((e: InteractionEvent) => !e.currentTarget)
-export const filterWithTarget = () => filter((e: InteractionEvent) => e.currentTarget !== undefined && e.currentTarget !== null)
-
+//#region Specific Filtering
+export function filterWithoutTarget(): MonoTypeOperatorFunction<InteractionEvent> {
+    return filter(e => !e.currentTarget)
+}
+export function filterWithTarget(): MonoTypeOperatorFunction<InteractionEvent> {
+    return filter(e => e.currentTarget !== undefined && e.currentTarget !== null)
+}
 export function filterEventButton(...acceptable: EventButtonType[]): MonoTypeOperatorFunction<PointerEvent> {
     return filter(e => acceptable.includes(e.button))
 }
 export function filterEventId(id: number): MonoTypeOperatorFunction<PointerEvent> {
     return filter(e => id === e.pointerId)
 }
-
 export function distinctPlaneVector(): MonoTypeOperatorFunction<PlaneVector> {
     return distinctUntilChanged<PlaneVector>(([prevX, prevY], [x, y]) =>
         prevX === x && prevY === y)
@@ -60,15 +65,11 @@ export function distinctViewport(): MonoTypeOperatorFunction<Viewport> {
     return distinctUntilChanged<Viewport>(({ position: [prevX, prevY], scale: prevScale }, { position: [x, y], scale }) =>
         prevX === x && prevY === y && prevScale === scale)
 }
-export function switchToLastestFrom<T, F>(to: Observable<T>): OperatorFunction<F, T> {
+//#endregion
+
+export function mapToLastestFrom<T, F>(to: Observable<T>): OperatorFunction<F, T> {
     return from => from.pipe(
         withLatestFrom(to),
-        map(([_, v]) => v),
-    )
-}
-export function switchTo<T, F>(to: Observable<T>): OperatorFunction<F, T> {
-    return from => from.pipe(
-        combineLatestWith(to),
         map(([_, v]) => v),
     )
 }
@@ -82,29 +83,32 @@ export function mergeWithSignalAs<T, F, G>(signal: Observable<T>, target: F): Mo
     return mergeWith(signal.pipe(mapTo(target)))
 }
 
-export function observeEvent<E extends HasEventTargetAddRemove<T> | ArrayLike<HasEventTargetAddRemove<T>>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
-export function observeEvent<E extends NodeStyleEventEmitter | ArrayLike<NodeStyleEventEmitter>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
-export function observeEvent<E extends NodeCompatibleEventEmitter | ArrayLike<NodeCompatibleEventEmitter>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
-export function observeEvent<E extends JQueryStyleEventEmitter<any, T> | ArrayLike<JQueryStyleEventEmitter<any, T>>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
-export function observeEvent<T>(target: any, eventName: string, observer: T): Subscription {
-    return fromEvent(target, eventName, (e: any) => e).subscribe(observer)
+export function scanWithInitializer<T, F>(
+    initializer: Observable<F>,
+    accumulator: (cumu: F, value: T) => F
+): OperatorFunction<T, F> {
+    return ob => ob.pipe(
+        withLatestFrom(initializer),
+        scan<[T, F], F>(
+            (cumu: F | undefined, [value, latest]) => cumu === undefined ? latest : accumulator(cumu, value),
+            undefined as unknown as F
+        ),
+    )
 }
-
-export const mapToAndObserveWith = <T, F>(target: F, observer: Observer<F>) =>
-    (_: T) => observer.next(target)
-
-export const mapAndObserveWith = <T, F>(fn: (event: T) => F, observer: Observer<F>) =>
-    (event: T) => observer.next(fn(event))
-
-export const observeWith = <T>(observer: Observer<T>) =>
-    (event: T) => observer.next(event)
+export function scanInitializedWithLatestFrom<T, F>(
+    initializer: Observable<F>,
+    accumulator: (cumu: F, value: T) => F
+): OperatorFunction<T, F> {
+    return ob => ob.pipe(
+        window(initializer),
+        switchMap(scanWithInitializer(initializer, accumulator))
+    )
+}
 
 export function windowPairwise<T>(signal: Observable<any>): OperatorFunction<T, [T, T]> {
     return ob => ob.pipe(
         window(signal),
-        switchMap(ob => ob.pipe(
-            pairwise(),
-        )),
+        switchMap(pairwise()),
     )
 }
 export function windowEachStartWith<T>(signal: Observable<any>, value: T): MonoTypeOperatorFunction<T> {
@@ -112,6 +116,14 @@ export function windowEachStartWith<T>(signal: Observable<any>, value: T): MonoT
         window(signal),
         switchMap(startWith(value)),
     )
+}
+
+export function observeEvent<E extends HasEventTargetAddRemove<T> | ArrayLike<HasEventTargetAddRemove<T>>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
+export function observeEvent<E extends NodeStyleEventEmitter | ArrayLike<NodeStyleEventEmitter>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
+export function observeEvent<E extends NodeCompatibleEventEmitter | ArrayLike<NodeCompatibleEventEmitter>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
+export function observeEvent<E extends JQueryStyleEventEmitter<any, T> | ArrayLike<JQueryStyleEventEmitter<any, T>>, T>(target: E, eventName: string, observer: Observer<T>): Subscription
+export function observeEvent<T>(target: any, eventName: string, observer: T): Subscription {
+    return fromEvent(target, eventName, (e: any) => e).subscribe(observer)
 }
 
 export function splitObservable<P, Q>(obs: Observable<[P, Q]>): [Observable<P>, Observable<Q>] {
@@ -131,7 +143,6 @@ export function transitionTimer(
             map(([prevTime, currTime]) => currTime - prevTime),
         )
 }
-
 export function transitionObservable<T>(
     transition: Transition<T>,
 ): Observable<T> {
@@ -150,7 +161,6 @@ export function transitionObservable<T>(
     })
     return res$
 }
-
 export function transitionObserver(
     transition: Transition<any>,
 ): Observer<number> {
