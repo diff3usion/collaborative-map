@@ -1,3 +1,4 @@
+export type EnumRecord<E> = Record<keyof E, E[keyof E]>
 export type KeyofWithType<T, U> = {
     [P in keyof T]: T[P] extends U ? P : never
 }[keyof T]
@@ -16,6 +17,7 @@ export enum PlaneAxis {
     X = 0,
     Y = 1,
 }
+export type PerAxis<T> = Record<PlaneAxis, T>
 export type Viewport = {
     position: PlaneVector
     scale: number

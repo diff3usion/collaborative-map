@@ -3,6 +3,7 @@ import { Subject } from 'rxjs'
 import Layout from 'antd/lib/layout/layout'
 
 import { documentKeyPress$, documentPointerUp$ } from './intent';
+import { voxelRegionZipFiles$ } from './intent/VoxelMapLoader';
 import { observeEvent } from './utils/rx';
 import { HeadBar } from './view/HeadBar'
 import { MainPanel } from './view/MainPanel'
@@ -22,7 +23,7 @@ const openTexturePackFile = (event: ChangeEvent<HTMLInputElement>) => {
 
 const openVoxelRegionFile = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target!.files)
-        VoxelRegionZipFiles$.next(event.target!.files)
+        voxelRegionZipFiles$.next(event.target!.files)
 }
 
 const App = () => {
@@ -43,6 +44,5 @@ const App = () => {
 }
 
 export const TexturePackZipFile$ = new Subject<File>()
-export const VoxelRegionZipFiles$ = new Subject<FileList>()
 
 export default App

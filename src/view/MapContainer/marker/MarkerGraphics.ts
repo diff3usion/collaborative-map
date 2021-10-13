@@ -3,7 +3,7 @@ import { Observable, Observer, Subscription } from "rxjs"
 import { markingContainer } from "./Marking"
 import { PlaneVector, Viewport } from "../../../Type"
 import { planeVectorShift, vectorAbs, vectorMinus } from "../../../utils/geometry"
-import { TransitionTicker } from "../../../utils/animation"
+import { TransitionTicker } from "../../../utils/pixi"
 import { transitionArray, linear, transitionVector } from "../../../utils/transition"
 import { viewport$ } from "../../../store/Map"
 

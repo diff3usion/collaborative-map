@@ -1,5 +1,6 @@
 import { Container } from "pixi.js"
 import { PlaneAxis } from "../../../Type"
+import { fromAxis } from "../../../utils/object"
 import { GridData, GridMaps } from "./GridData"
 import { GridLineGraphics, GridLineGraphicsData, updateGridLineGraphics } from "./GridLineGraphics"
 
@@ -48,8 +49,7 @@ export function initGridGraphicsGroup(
 ): GridGraphicsGroup {
     return {
         ...data,
-        [PlaneAxis.X]: new Map(),
-        [PlaneAxis.Y]: new Map(),
+        ...fromAxis(_ => new Map()),
         container,
     }
 }

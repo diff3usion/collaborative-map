@@ -61,7 +61,7 @@ pub fn getRegionTime(region: u16) -> Option<u64> {
 
 #[wasm_bindgen]
 #[allow(non_snake_case)]
-pub fn getLocationMeta(region: u16, x: usize, z: usize) -> Option<Vec<u8>> {
+pub fn getLocationData(region: u16, x: usize, z: usize) -> Option<Vec<u8>> {
     match MAP_REGION_ID_STORE.lock().unwrap().get(region) {
         Some(region) => match region.get_location(x, z) {
             Some(location) => Some(location.encode()),
@@ -73,7 +73,7 @@ pub fn getLocationMeta(region: u16, x: usize, z: usize) -> Option<Vec<u8>> {
 
 #[wasm_bindgen]
 #[allow(non_snake_case)]
-pub fn getBlockMeta(region: u16, x: usize, z: usize, i: usize) -> Option<Vec<u8>> {
+pub fn getBlockData(region: u16, x: usize, z: usize, i: usize) -> Option<Vec<u8>> {
     match MAP_REGION_ID_STORE.lock().unwrap().get(region) {
         Some(region) => match region.get_location(x, z) {
             Some(location) => match region.get_blocks(location) {

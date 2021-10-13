@@ -1,3 +1,5 @@
+import { EnumRecord, PlaneAxis, PerAxis } from "../Type"
+
 export function pickProperties<T extends Object, F extends (keyof T)[]>(
     obj: T,
     keys: F,
@@ -54,3 +56,27 @@ export function binaryOperatorWithArgs<T extends Object, A extends any[]>(
             return obj
         }, { ...op0 })
 }
+
+function parseKey(k: string): string | number {
+    const res = Number(k)
+    return (isNaN(res) ? k : res)
+}
+export function objectFilter<T>(obj: T, predicate: (k: string, v: T[keyof T]) => boolean): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([k, v]) => predicate(k, v))
+    ) as Partial<T>
+}
+export function recordMap<T extends string | number, F, K extends string | number, V>(record: Record<T, F>, mapper: (k: T, v: F) => [K, V]): Record<K, V> {
+    return Object.fromEntries(
+        Object.keys(record)
+            .map(t => parseKey(t) as T)
+            .map(t => mapper(t, record[t]) as [K, V])
+    ) as Record<K, V>
+}
+export function enumMap<E extends EnumRecord<E>>(e: E): <T>(mapper: (v: E[keyof E]) => T) => Record<E[keyof E], T> {
+    return mapper => recordMap(
+        objectFilter(e, k => isNaN(Number(k))),
+        k => [e[k as keyof E], mapper(e[k as keyof E])],
+    )
+}
+export const fromAxis: <T>(mapper: (v: PlaneAxis) => T) => PerAxis<T> = enumMap(PlaneAxis)

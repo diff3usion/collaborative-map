@@ -7,7 +7,7 @@ import { BlockState, MapRegion } from "../Data"
 import json from './map_color_table.json'
 import { newRegion$ } from ".."
 import { RenderedRegion$ } from "../../../store/MapData"
-import { imageDataToBase64Url, initTempCanvas } from "../../../utils/dom"
+import { imageDataToDataUrl, initTempCanvas } from "../../../utils/dom"
 import { init2dArray, initArray } from "../../../utils/collection"
 
 
@@ -64,7 +64,7 @@ const renderRegion: (region: MapRegion) => Promise<MapRegion>
             }
 
         const imageData = colorMatrixToImageData(colorMatrix)
-        region.url = await imageDataToBase64Url(imageData)
+        region.url = await imageDataToDataUrl(imageData)
         return region
     }
 
