@@ -1,55 +1,58 @@
 import { Container } from "pixi.js"
-import { PlaneAxis } from "../../../Type"
+import { PlaneAxis, Overwrite, Viewport } from "../../../Type"
+import { positionShift } from "../../../utils/geometry"
 import { fromAxis } from "../../../utils/object"
-import { GridData, GridMaps } from "./GridData"
-import { GridLineGraphics, GridLineGraphicsData, updateGridLineGraphics } from "./GridLineGraphics"
+import { GridData } from "./GridData"
+import { GridLineGraphics } from "./GridLineGraphics"
 
-type GridGraphicsGroupOptions = Readonly<{
-    container: Container
-}>
-type GridLineGraphicsMap = Map<number, GridLineGraphics>
-type GridGraphicsMaps = Record<PlaneAxis, GridLineGraphicsMap>
-export type GridGraphicsGroup = Omit<GridData, keyof GridMaps> & GridGraphicsMaps & GridGraphicsGroupOptions
+type GridLineGraphicsMap = Map<number, GridLineGraphics.Obj>
 
-export function gridGraphicsGroupAdd(
-    group: GridGraphicsGroup,
-    axis: PlaneAxis,
-    graphics: GridLineGraphics,
-): void {
-    group[axis].set(graphics.relativePosition, graphics)
-    group.container.addChild(graphics.graphics)
-}
-export function gridGraphicsGroupUpdate(
-    group: GridGraphicsGroup,
-    axis: PlaneAxis,
-    data: GridLineGraphicsData,
-): void {
-    updateGridLineGraphics(
-        group[axis].get(data.relativePosition)!,
-        data,
-    )
-}
-export function gridGraphicsGroupRemove(
-    group: GridGraphicsGroup,
-    axis: PlaneAxis,
-    position: number,
-): void {
-    const graphics = group[axis].get(position)
-    if (graphics) {
-        const g = graphics.graphics
-        group.container.removeChild(g)
-        g.destroy()
-        group[axis].delete(graphics.relativePosition)
+export module GridGraphicsGroup {
+    type Options = Readonly<{
+        container: Container
+    }>
+    type AxisMaps = Record<PlaneAxis, GridLineGraphicsMap>
+    export type Obj = Overwrite<GridData.Obj, AxisMaps> & Options
+
+    export function add(
+        group: Obj,
+        axis: PlaneAxis,
+        graphics: GridLineGraphics.Obj,
+    ): void {
+        group[axis].set(graphics.position, graphics)
+        group.container.addChild(graphics.graphics)
     }
-}
-
-export function initGridGraphicsGroup(
-    data: GridData,
-    container: Container,
-): GridGraphicsGroup {
-    return {
-        ...data,
-        ...fromAxis(_ => new Map()),
-        container,
+    export function update(
+        group: Obj,
+        axis: PlaneAxis,
+        data: GridLineGraphics.Data,
+    ): void {
+        GridLineGraphics.update(
+            group[axis].get(data.position)!,
+            data,
+        )
+    }
+    export function remove(
+        group: Obj,
+        axis: PlaneAxis,
+        position: number,
+    ): void {
+        const graphics = group[axis].get(position)
+        if (graphics) {
+            const g = graphics.graphics
+            group.container.removeChild(g)
+            g.destroy()
+            group[axis].delete(graphics.position)
+        }
+    }
+    export function init(
+        data: GridData.Obj,
+        container: Container,
+    ): Obj {
+        return {
+            ...data,
+            ...fromAxis(_ => new Map()),
+            container,
+        }
     }
 }

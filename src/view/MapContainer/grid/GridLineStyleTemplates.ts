@@ -1,5 +1,5 @@
-import { GridData, GridLineData } from "./GridData"
-import { GridLineGraphicsStyle } from "./GridLineGraphics"
+import { GridData } from "./GridData"
+import { GridLineGraphics } from "./GridLineGraphics"
 
 enum StyleType {
     AxisLine,
@@ -9,7 +9,7 @@ enum StyleType {
 }
 
 const labelOffset = 32
-const styleTemplates: Record<StyleType, GridLineGraphicsStyle> = {
+const styleTemplates: Record<StyleType, GridLineGraphics.Style> = {
     [StyleType.AxisLine]: {
         width: 4,
         color: 0x888888,
@@ -33,31 +33,32 @@ const styleTemplates: Record<StyleType, GridLineGraphicsStyle> = {
 }
 
 function getStyleType(
-    line: GridLineData,
-    grid: GridData,
+    line: GridData.Line,
+    grid: GridData.Obj,
 ): StyleType {
-    const { relativePosition } = line
+    const { position } = line
     const { maxLineGap, gap } = grid
-    if (relativePosition === 0) return StyleType.AxisLine
-    if (relativePosition % maxLineGap === 0) return StyleType.TopLevelLine
-    if (gap === 0 || (relativePosition / gap) % 2 === 0) return StyleType.MajorLine
+    if (position === 0) return StyleType.AxisLine
+    if (position % maxLineGap === 0) return StyleType.TopLevelLine
+    if (gap === 0 || (position / gap) % 2 === 0) return StyleType.MajorLine
     return StyleType.MinorLine
 }
 function getStyleLabel(
-    line: GridLineData,
+    { position }: GridData.Line,
     type: StyleType,
+    { relativePosition }: GridLineGraphics.RelativeData,
 ): string | undefined {
-    const { position, relativePosition } = line
-    const canFitLabel = position > labelOffset
-    return type !== StyleType.MinorLine && canFitLabel ? `${relativePosition}` : undefined
+    const canFitLabel = relativePosition > labelOffset
+    return type !== StyleType.MinorLine && canFitLabel ? `${position}` : undefined
 }
 
 export function getGridLineStyle(
-    line: GridLineData,
-    grid: GridData,
-): GridLineGraphicsStyle {
+    line: GridData.Line,
+    grid: GridData.Obj,
+    relativeData: GridLineGraphics.RelativeData,
+): GridLineGraphics.Style {
     const type = getStyleType(line, grid)
-    const label = getStyleLabel(line, type)
+    const label = getStyleLabel(line, type, relativeData)
     const template = styleTemplates[type]
-    return { ...template, label }
+    return { ...template, label, ...relativeData }
 }

@@ -1,6 +1,7 @@
 import { EnumRecord, PlaneAxis, PerAxis } from "../Type"
 import { arrayFilterIn } from "./collection"
 
+
 export function pickProperties<T extends Object, F extends (keyof T)[]>(
     obj: T,
     keys: F,

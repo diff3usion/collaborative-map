@@ -80,62 +80,101 @@ export const doesTwoRectsOverlap: (r1: PlaneRect, r2: PlaneRect) => boolean
     = ([[x1, y1], [w1, h1]], [[x2, y2], [w2, h2]]) =>
         x1 < x2 + w2 && x1 + w1 > x2 && y1 + h1 > y2 && y1 < y2 + h2
 
-// Shift: input relative to viewport --> output relative to global
+// Shift: input (relative to stage viewport) --> output (relative to canvas display)
 
-export const positionShift: (n: number, orientation: PlaneAxis, viewport: Viewport) => number
-    = (n, axis, { position: [x, y], scale }) => scale * n + (axis === PlaneAxis.X ? y : x)
+export function positionShift(
+    n: number,
+    axis: PlaneAxis,
+    { position: [x, y], scale }: Viewport,
+): number {
+    return scale * n + (axis === PlaneAxis.X ? y : x)
+}
+export function positionUnshift(
+    n: number,
+    axis: PlaneAxis,
+    { position: [x, y], scale }: Viewport,
+): number {
+    return (n - (axis === PlaneAxis.X ? y : x)) / scale
+}
+export function planeVectorShift(
+    v: PlaneVector,
+    { position, scale }: Viewport,
+): PlaneVector {
+    return vectorPlus(vectorTimes(scale, v), position)
+}
+export function planeVectorUnshift(
+    v: PlaneVector,
+    { position, scale }: Viewport,
+): PlaneVector {
+    return vectorDivide(scale, vectorMinus(v, position))
+}
+export function planeRectUnshift(
+    [position, size]: PlaneRect,
+    viewport: Viewport,
+): PlaneRect {
+    const shiftedPos = planeVectorUnshift(position, viewport)
+    const shiftedSize = vectorDivide(viewport.scale, size)
+    return [shiftedPos, shiftedSize]
+}
 
-export const positionUnshift: (n: number, orientation: PlaneAxis, viewport: Viewport) => number
-    = (n, axis, { position: [x, y], scale }) => (n - (axis === PlaneAxis.X ? y : x)) / scale
+export function planeVectorsBoundingRect(vectors: PlaneVector[]): PlaneRect {
+    const res = vectors.reduce<NumMatrix<2, 2>>((prev, curr) =>
+        mapMatrix<number, 2, 2>(prev, (val, row, col) => (row ? Math.max : Math.min)(val, curr[col])),
+        [[Number.MAX_VALUE, Number.MAX_VALUE], [-Number.MAX_VALUE, -Number.MAX_VALUE]])
+    res[1] = vectorMinus(res[1], res[0])
+    res[1] = vectorBounded(1, Infinity, res[1])
+    return res
+}
 
-export const planeVectorShift: (v: PlaneVector, viewport: Viewport) => PlaneVector
-    = (v, { position, scale }) => vectorPlus(vectorTimes(scale, v), position)
+export function scaleWithMovingPoint(
+    scale: number,
+    from: PlaneVector,
+    to: PlaneVector
+): (v: PlaneVector) => PlaneVector {
+    return v => vectorMinus(to, vectorTimes(scale, vectorMinus(from, v)))
+}
+export function scaleWithFixedPoint(
+    scale: number,
+    fixed: PlaneVector
+): (v: PlaneVector) => PlaneVector {
+    return scaleWithMovingPoint(scale, fixed, fixed)
+}
+export function scaleRectWithFixedPoint(
+    [position, size]: PlaneRect,
+    scale: number,
+    fixed: PlaneVector,
+): PlaneRect {
+    return [scaleWithFixedPoint(scale, fixed)(position), vectorTimes(scale, size)]
+}
+export function scaleRectWithMinSize(
+    [position, size]: PlaneRect,
+    scale: number,
+    fixed: PlaneVector,
+    min: number
+): PlaneRect {
+    if (size[0] * scale < min) scale = min / size[0]
+    if (size[1] * scale < min) scale = min / size[1]
+    return scaleRectWithFixedPoint([position, size], scale, fixed)
+}
 
-export const planeVectorUnshift: (v: PlaneVector, viewport: Viewport) => PlaneVector
-    = (v, { position, scale }) => vectorTimes(1 / scale, vectorMinus(v, position))
-
-export const planeVectorsBoundingRect: (vectors: PlaneVector[]) => PlaneRect
-    = vectors => {
-        const res = vectors.reduce<NumMatrix<2, 2>>((prev, curr) =>
-            mapMatrix<number, 2, 2>(prev, (val, row, col) => (row ? Math.max : Math.min)(val, curr[col])),
-            [[Number.MAX_VALUE, Number.MAX_VALUE], [-Number.MAX_VALUE, -Number.MAX_VALUE]])
-        res[1] = vectorMinus(res[1], res[0])
-        res[1] = vectorBounded(1, Infinity, res[1])
-        return res
-    }
-
-export const scaleWithMovingPoint: (scale: number, from: PlaneVector, to: PlaneVector) => (v: PlaneVector) => PlaneVector
-    = (scale, from, to) =>
-        v => vectorMinus(to, vectorTimes(scale, vectorMinus(from, v)))
-
-export const scaleWithFixedPoint: (scale: number, fixed: PlaneVector) => (v: PlaneVector) => PlaneVector
-    = (scale, fixed) =>
-        scaleWithMovingPoint(scale, fixed, fixed)
-
-export const scaleRectWithFixedPoint: (rect: PlaneRect, scale: number, fixed: PlaneVector) => PlaneRect
-    = ([position, size], scale, fixed) =>
-        [scaleWithFixedPoint(scale, fixed)(position), vectorTimes(scale, size)]
-
-export const scaleRectWithMinSize: (rect: PlaneRect, scale: number, fixed: PlaneVector, min: number) => PlaneRect
-    = ([position, size], scale, fixed, min) => {
-        if (size[0] * scale < min) scale = min / size[0]
-        if (size[1] * scale < min) scale = min / size[1]
-        return scaleRectWithFixedPoint([position, size], scale, fixed)
-    }
-
-export const divideRectByHalf: (rect: PlaneRect, axis: PlaneAxis) => [PlaneRect, PlaneRect]
-    = ([[x, y], [w, h]], axis) =>
-        axis === PlaneAxis.X ? [
-            [[x, y], [w / 2, h]],
-            [[x + w / 2, y], [w / 2, h]],
-        ] : [
-            [[x, y], [w, h / 2]],
-            [[x, y + h / 2], [w, h / 2]],
-        ]
-
-export const rectCenter: (rect: PlaneRect) => PlaneVector
-    = ([[x, y], [w, h]]) => [x + w / 2, y + h / 2]
-
-export const scaleToFitRectIn: (rect: PlaneRect, size: PlaneSize) => number
-    = ([_, [w, h]], [sw, sh]) =>
-        Math.min(sw / w, sh / h)
+export function divideRectByHalf(
+    [[x, y], [w, h]]: PlaneRect,
+    axis: PlaneAxis
+): [PlaneRect, PlaneRect] {
+    return axis === PlaneAxis.X ? [
+        [[x, y], [w / 2, h]],
+        [[x + w / 2, y], [w / 2, h]],
+    ] : [
+        [[x, y], [w, h / 2]],
+        [[x, y + h / 2], [w, h / 2]],
+    ]
+}
+export function rectCenter([[x, y], [w, h]]: PlaneRect): PlaneVector {
+    return [x + w / 2, y + h / 2]
+}
+export function scaleToFitRectIn(
+    [_, [w, h]]: PlaneRect,
+    [sw, sh]: PlaneSize
+): number {
+    return Math.min(sw / w, sh / h)
+}
