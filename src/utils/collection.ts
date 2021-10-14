@@ -188,23 +188,42 @@ export class TwoWayMap<K, V> extends Map<K, V> {
     }
 }
 
-export function fillArray<T>(length: number, value: T): T[] {
+export function arrayFill<T>(length: number, value: T): T[] {
     return new Array(length).fill(0).map(() => value)
 }
-export function initArray<T>(length: number, producer: (index: number) => T): T[] {
+export function arrayInit<T>(length: number, producer: (index: number) => T): T[] {
     return new Array(length).fill(0).map((_, index) => producer(index))
 }
-export function init2dArray<T>(row: number, col: number, producer: (row: number, col: number) => T): T[][] {
+export function doubleArrayInit<T>(row: number, col: number, producer: (row: number, col: number) => T): T[][] {
     return new Array(row).fill(0).map((_, r) => new Array(col).fill(0).map((_, c) => producer(r, c)))
 }
-export function map2dArray<T, F>(arr: T[][], producer: (val: T, row: number, col: number) => F): F[][] {
+export function doubleArrayMap<T, F>(arr: T[][], producer: (val: T, row: number, col: number) => F): F[][] {
     return arr.map((row, r) => row.map((val, c) => producer(val, r, c)))
 }
+interface PredicateCollection<T> { has(key: T): boolean }
+export function arraySomeIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.some(c => collection.has(c))
+}
+export function arraySomeNotIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.some(c => !collection.has(c))
+}
+export function arrayEveryIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.every(c => collection.has(c))
+}
+export function arrayEveryNotIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
+    return arr.every(c => !collection.has(c))
+}
+export function arrayFilterIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
+    return arr.filter(c => collection.has(c))
+}
+export function arrayFilterNotIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
+    return arr.filter(c => !collection.has(c))
+}
 
-export function initMap<K, V>(arr: K[], mapper: (key: K) => V): Map<K, V> {
+export function mapInit<K, V>(arr: K[], mapper: (key: K) => V): Map<K, V> {
     return new Map(arr.map(k => [k, mapper(k)]))
 }
-export function initMapPluck<V, P extends keyof V>(arr: V[], prop: P): Map<V[P], V> {
+export function mapInitPluck<V, P extends keyof V>(arr: V[], prop: P): Map<V[P], V> {
     return new Map(arr.map(k => [k[prop], k]))
 }
 export function mapMap<K, V, T, F>(map: Map<K, V>, mapper: (k: K, v: V) => [T, F]): Map<T, F> {
@@ -233,7 +252,6 @@ export function mapMapKey<K, V, T>(map: Map<K, V>, mapper: (k: K, v: V) => T): M
 export function mapMapValue<K, V, T>(map: Map<K, V>, mapper: (v: V, k: K) => T): Map<K, T> {
     return mapMap(map, (k, v) => [k, mapper(v, k)])
 }
-
 export function mapGetOrInit<K, V>(map: Map<K, V>, key: K, val: V): V {
     return map.has(key) ? map.get(key)! : map.set(key, val).get(key)!
 }
@@ -242,37 +260,7 @@ export function arrayMapPushOrInit<T, F>(map: Map<T, F[]>, key: T, value: F): vo
 }
 export function setMapAddOrInit<T, F>(map: Map<T, Set<F>>, key: T, value: F): void {
     map.has(key) ? map.get(key)!.add(value) : map.set(key, new Set([value]))
-}
-
-interface PredicateCollection<T> { has(key: T): boolean }
-export function arraySomeIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
-    return arr.some(c => collection.has(c))
-}
-export function arraySomeNotIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
-    return arr.some(c => !collection.has(c))
-}
-export function arrayEveryIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
-    return arr.every(c => collection.has(c))
-}
-export function arrayEveryNotIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
-    return arr.every(c => !collection.has(c))
-}
-export function arrayFilterIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
-    return arr.filter(c => collection.has(c))
-}
-export function arrayFilterNotIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
-    return arr.filter(c => !collection.has(c))
-}
-
-export function setAdd<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
-    for (let v of iterable) set.add(v)
-    return set
-}
-export function setRemove<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
-    for (let v of iterable) set.delete(v)
-    return set
-}
-export function mapAdd<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, V]>): Map<K, V> {
+}export function mapAdd<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, V]>): Map<K, V> {
     for (let [k, v] of iterable) map.set(k, v)
     return map
 }
@@ -285,7 +273,15 @@ export function mapRemove<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, 
     return map
 }
 
-function twoSetUnion<T>(a: Set<T>, b: Set<T>): Set<T> {
+export function setAdd<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
+    for (let v of iterable) set.add(v)
+    return set
+}
+export function setRemove<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
+    for (let v of iterable) set.delete(v)
+    return set
+}
+export function twoSetUnion<T>(a: Set<T>, b: Set<T>): Set<T> {
     const res = new Set<T>()
     a.forEach(v => res.add(v))
     b.forEach(v => res.add(v))
@@ -294,7 +290,7 @@ function twoSetUnion<T>(a: Set<T>, b: Set<T>): Set<T> {
 export function setUnion<T>(set0: Set<T>, set1: Set<T>, ...sets: Set<T>[]): Set<T> {
     return sets.reduce((res, set) => twoSetUnion(res, set), twoSetUnion(set0, set1))
 }
-function twoSetIntersect<T>(a: Set<T>, b: Set<T>): Set<T> {
+export function twoSetIntersect<T>(a: Set<T>, b: Set<T>): Set<T> {
     const res = new Set<T>()
     a.forEach(v => { if (b.has(v)) res.add(v) })
     return res
@@ -302,7 +298,7 @@ function twoSetIntersect<T>(a: Set<T>, b: Set<T>): Set<T> {
 export function setIntersect<T>(set0: Set<T>, set1: Set<T>, ...sets: Set<T>[]): Set<T> {
     return sets.reduce((res, set) => twoSetIntersect(res, set), twoSetIntersect(set0, set1))
 }
-function twoSetSubtract<T>(a: Set<T>, b: Set<T>): Set<T> {
+export function twoSetSubtract<T>(a: Set<T>, b: Set<T>): Set<T> {
     const res = new Set<T>()
     a.forEach(v => { if (!b.has(v)) res.add(v) })
     return res

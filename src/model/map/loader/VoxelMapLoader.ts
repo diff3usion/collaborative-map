@@ -1,7 +1,7 @@
 import * as zip from "@zip.js/zip.js"
 import { of, from, forkJoin, map, mergeMap, Observable, filter } from "rxjs"
 
-import { initArray } from "../../../utils/collection"
+import { arrayInit } from "../../../utils/collection"
 import { UnIndexedRegion, MapRegion, MapBlock, UnfoldedLocation, UnfoldedBlock } from "../Data"
 import { voxelRegionZipFiles$ } from "../../../intent/VoxelMapLoader"
 import { regionProvider$ } from ".."
@@ -130,7 +130,7 @@ const cacheToMapRegion: (indexedCache: VoxelMapCache) => UnIndexedRegion
                     throw new Error("Error when decoding region data: Unknown version")
                 }
                 data = (x: number, z: number, byte: number) => cacheData[dataIndexOf(x, z, byte)]
-                const columns = initArray(VOXEL_MAP_REGION_WIDTH, () => new Array(VOXEL_MAP_REGION_HEIGHT))
+                const columns = arrayInit(VOXEL_MAP_REGION_WIDTH, () => new Array(VOXEL_MAP_REGION_HEIGHT))
                 for (let x = 0; x < VOXEL_MAP_REGION_WIDTH; x++)
                     for (let z = 0; z < VOXEL_MAP_REGION_HEIGHT; z++)
                         columns[x][z] = decodeColumnData(key, x, z)
@@ -190,7 +190,7 @@ const cacheToRegion: (indexedCache: VoxelMapCache) => VoxelRegion
         })
 
         const decodeMapData: (key: CacheKey, data: Uint8Array[][]) => VoxelColumn[][] = (key, data) => {
-            const columns = initArray(VOXEL_MAP_REGION_WIDTH, () => new Array(VOXEL_MAP_REGION_HEIGHT))
+            const columns = arrayInit(VOXEL_MAP_REGION_WIDTH, () => new Array(VOXEL_MAP_REGION_HEIGHT))
             for (let x = 0; x < VOXEL_MAP_REGION_WIDTH; x++)
                 for (let z = 0; z < VOXEL_MAP_REGION_HEIGHT; z++)
                     columns[x][z] = decodeColumnData(key, data[x][z])
@@ -202,7 +202,7 @@ const cacheToRegion: (indexedCache: VoxelMapCache) => VoxelRegion
                 throw new Error("Error when decoding region data: Unmatched size")
             const version = parseInt(control.get("version")!)
             const mapData: Uint8Array[][] =
-                initArray(VOXEL_MAP_REGION_WIDTH, () => initArray(VOXEL_MAP_REGION_HEIGHT, () => new Uint8Array(VOXEL_MAP_COLOMN_BYTES)))
+                arrayInit(VOXEL_MAP_REGION_WIDTH, () => arrayInit(VOXEL_MAP_REGION_HEIGHT, () => new Uint8Array(VOXEL_MAP_COLOMN_BYTES)))
             let dataIndexOf: (x: number, z: number, byte: number) => number
             if (version === 1) {
                 dataIndexOf = (x, z, byte) => byte + x * VOXEL_MAP_COLOMN_BYTES + z * VOXEL_MAP_COLOMN_BYTES * VOXEL_MAP_REGION_WIDTH

@@ -1,6 +1,6 @@
 import { BehaviorSubject, distinctUntilChanged, map, MonoTypeOperatorFunction, OperatorFunction, Subject, withLatestFrom } from "rxjs"
 import { EventButtonType, PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport } from "../Type"
-import { initMapPluck } from "../utils/collection"
+import { mapInitPluck } from "../utils/collection"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils/event"
 import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
 import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
@@ -28,12 +28,12 @@ export const cursorRoundedRelativePosition$ = new BehaviorSubject<PlaneVector>([
 export const canvasPointersCurrentlyDown$ = new BehaviorSubject<PointerEvent[]>([])
 export const canvasPointersCurrentlyDownIdMap$ = canvasPointersCurrentlyDown$
     .pipe(
-        map(down => initMapPluck(down, 'pointerId'))
+        map(down => mapInitPluck(down, 'pointerId'))
     )
 export const canvasPointersDownAndMoved$ = new BehaviorSubject<PointerEvent[]>([])
 export const canvasPointersDownAndMovedIdMap$ = canvasPointersDownAndMoved$
     .pipe(
-        map(down => initMapPluck(down, 'pointerId'))
+        map(down => mapInitPluck(down, 'pointerId'))
     )
 export const canvasSinglePointerDown$ = canvasPointersCurrentlyDown$
     .pipe(

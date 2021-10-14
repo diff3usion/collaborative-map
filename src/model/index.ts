@@ -1,6 +1,6 @@
 import { mergeMap, from, filter, map, tap } from "rxjs";
 import { PlaneSize, PlaneVector } from "../Type";
-import { initArray } from "../utils/collection";
+import { arrayInit } from "../utils/collection";
 import { imageDataToDataUrl, loadBlobAsArrayBuffer } from "../utils/dom";
 import { isPointInRect } from "../utils/geometry";
 import { bytesToNumber } from "../utils/math";
@@ -94,7 +94,7 @@ export class MapLocation {
         return bytesToNumber(data, 2, 2)
     }
     get blocks() {
-        return initArray(this.size!, i => new MapBlock(this.id, this.x, this.z, i))
+        return arrayInit(this.size!, i => new MapBlock(this.id, this.x, this.z, i))
     }
     block(index: number) {
         return new MapBlock(this.id, this.x, this.z, index)

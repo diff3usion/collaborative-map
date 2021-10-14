@@ -1,9 +1,10 @@
 import { Container } from "pixi.js"
 import { Subject, map, tap } from "rxjs"
 import { sizedViewport$ } from "../../../store/Map"
-import { PlaneAxis, SizedViewport } from "../../../Type"
-import { MapDiff } from "../../../utils/collection"
-import { gridMapsDiff, GridData, GridLineData, GridOptions, initGridData } from "./GridData"
+import { PerAxis, PlaneAxis, SizedViewport } from "../../../Type"
+import { Diff, MapDiff, twoMapsDiff } from "../../../utils/collection"
+import { fromAxis } from "../../../utils/object"
+import { GridData, GridLineData, GridLineDataMap, GridMaps, GridOptions, sizedViewportToGridData } from "./GridData"
 import { GridGraphicsGroup, gridGraphicsGroupAdd, gridGraphicsGroupRemove, gridGraphicsGroupUpdate, initGridGraphicsGroup } from "./GridGraphicsGroup"
 import { initGridLineGraphics } from "./GridLineGraphics"
 import { getGridLineStyle } from "./GridLineStyleTemplates"
@@ -22,7 +23,7 @@ function initSizedViewport(): SizedViewport {
     return { size: [0, 0], viewport: { scale: 1, position: [0, 0] } }
 }
 export const gridGraphicsGroup = initGridGraphicsGroup(
-    initGridData(
+    sizedViewportToGridData(
         initSizedViewport(),
         defaultGridOptions
     ),
@@ -32,7 +33,7 @@ export const gridGraphicsGroup = initGridGraphicsGroup(
 const gridUpdate$ = new Subject<SizedViewport>()
 const gridData$ = gridUpdate$
     .pipe(
-        map(svp => initGridData(svp, defaultGridOptions))
+        map(svp => sizedViewportToGridData(svp, defaultGridOptions))
     )
 
 function updateGraphicsMap(
@@ -47,6 +48,14 @@ function updateGraphicsMap(
         gridGraphicsGroupUpdate(gridGraphicsGroup, axis, { ...line, ...getGridLineStyle(line, data) })
     for (let p of deletion.keys())
         gridGraphicsGroupRemove(gridGraphicsGroup, axis, p)
+}
+
+export type GridMapsDiff = Readonly<PerAxis<Diff<GridLineDataMap>>>
+export function gridMapsDiff(
+    data0: GridMaps,
+    data1: GridMaps,
+): GridMapsDiff {
+    return fromAxis(axis => twoMapsDiff(data0[axis], data1[axis]))
 }
 
 gridData$

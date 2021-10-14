@@ -1,7 +1,7 @@
 import { PerAxis, PlaneAxis, PlaneVector, SizedViewport, Viewport, } from "../../../Type"
-import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils/math"
-import { initArray, Diff, twoMapsDiff } from "../../../utils/collection"
+import { arrayInit as arrayInit, mapInit } from "../../../utils/collection"
 import { positionShift } from "../../../utils/geometry"
+import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils/math"
 import { fromAxis } from "../../../utils/object"
 
 export type GridLineData = Readonly<{
@@ -20,7 +20,6 @@ export type GridState = Readonly<{
     gap: number
 }>
 export type GridMaps = Readonly<PerAxis<GridLineDataMap>>
-export type GridMapsDiff = Readonly<PerAxis<Diff<GridLineDataMap>>>
 export type GridData = GridOptions & GridMaps & GridState
 
 function sizeToGridLineGap(
@@ -42,7 +41,7 @@ function gridPositions(
 ): number[] {
     const start = Math.ceil(delta / scale / gap) * gap
     const count = Math.ceil(Math.floor(range / scale - (start - delta / scale)) / gap)
-    return initArray(count, idx => start + idx * gap)
+    return arrayInit(count, idx => start + idx * gap)
 }
 function initGridLineData(
     axis: PlaneAxis,
@@ -63,14 +62,10 @@ function initGridLineDataMap(
     positions: number[],
     length: number,
 ): GridLineDataMap {
-    const res = new Map<number, GridLineData>()
-    positions
-        .map(p => initGridLineData(axis, viewport, length, p))
-        .forEach(l => res.set(l.relativePosition, l))
-    return res
+    return mapInit(positions, p => initGridLineData(axis, viewport, length, p))
 }
 
-export function initGridData(
+export function sizedViewportToGridData(
     { size, viewport }: SizedViewport,
     options: GridOptions,
 ): GridData {
@@ -83,10 +78,4 @@ export function initGridData(
     const positions = fromAxis(axis => gridPositions(deltas[axis], ranges[axis], gap, scale))
     const dataMaps = fromAxis(axis => initGridLineDataMap(axis, viewport, positions[axis], lengths[axis]))
     return { gap, ...options, ...dataMaps }
-}
-export function gridMapsDiff(
-    data0: GridMaps,
-    data1: GridMaps,
-): GridMapsDiff {
-    return fromAxis(axis => twoMapsDiff(data0[axis], data1[axis]))
 }

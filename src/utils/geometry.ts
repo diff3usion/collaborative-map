@@ -1,10 +1,10 @@
 import { numberBounded } from "./math"
 import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf, PlaneAxis } from "../Type"
-import { initArray, init2dArray, map2dArray } from "./collection"
+import { arrayInit, doubleArrayInit, doubleArrayMap } from "./collection"
 
-export const initTuple = initArray as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
-export const initMatrix = init2dArray as <T, R extends number, C extends number>(row: R, col: C, producer: (row: number, col: number) => T) => MatrixOf<T, R, C>
-export const mapMatrix = map2dArray as <T, R extends number, C extends number>(m: MatrixOf<T, R, C>, producer: (val: T, row: number, col: number) => T) => MatrixOf<T, R, C>
+export const initTuple = arrayInit as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
+export const initMatrix = doubleArrayInit as <T, R extends number, C extends number>(row: R, col: C, producer: (row: number, col: number) => T) => MatrixOf<T, R, C>
+export const mapMatrix = doubleArrayMap as <T, R extends number, C extends number>(m: MatrixOf<T, R, C>, producer: (val: T, row: number, col: number) => T) => MatrixOf<T, R, C>
 
 export function vectorFlip<V extends NumTuple<number>>(vector: V): V {
     return [...vector].reverse() as V

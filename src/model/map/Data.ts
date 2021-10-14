@@ -2,7 +2,7 @@ import _ from "lodash"
 import { BlockState as UnIndexedState } from ".."
 import { PlaneRect } from "../../Type"
 import { bytesToNumber, numberToBytes } from "../../utils/math"
-import { initArray } from "../../utils/collection"
+import { arrayInit } from "../../utils/collection"
 
 /**
  *  Map data format with variable block numbers (small endian)
@@ -135,7 +135,7 @@ export class MapLocation {
     get blocks(): MapBlock[] {
         const size = this.size
         const offset = this.offset
-        return initArray(size, i => new MapBlock(this.data, offset + i * BLOCK_DATA_BYTES))
+        return arrayInit(size, i => new MapBlock(this.data, offset + i * BLOCK_DATA_BYTES))
     }
     get biomeId(): number {
         return bytesToNumber(this.data, this.index + LOCATION_BIOMEID_OFFSET, LOCATION_BIOMEID_BYTES)

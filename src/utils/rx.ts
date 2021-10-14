@@ -1,18 +1,18 @@
 import { InteractionEvent } from "pixi.js"
-import { combineLatestWith, distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, scan, share, startWith, Subject, Subscription, switchMap, take, takeWhile, timer, window, withLatestFrom } from "rxjs"
+import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, scan, share, startWith, Subject, Subscription, switchMap, takeWhile, timer, window, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
 import { EventButtonType, PlaneVector, Viewport } from "../Type"
 import { Transition } from "./transition"
 
 //#region General Filtering
-type ExtractObservableArray<T extends Array<Observable<any>>> =
+type UnwrappedObservableTuple<T extends Array<Observable<any>>> =
     { [K in keyof T]: T[K] extends Observable<infer V> ? V : never }
 export const filterWithMultipleLatestFrom =
     <F extends Array<Observable<any>>>(...targets: F) =>
-        (predicate: (value: ExtractObservableArray<F>) => boolean) =>
+        (predicate: (value: UnwrappedObservableTuple<F>) => boolean) =>
             <T>(ob: Observable<T>) => ob.pipe(
                 withLatestFrom(...targets),
-                filter(([_, ...latestes]) => predicate(latestes as unknown as ExtractObservableArray<F>)),
+                filter(([_, ...latestes]) => predicate(latestes as unknown as UnwrappedObservableTuple<F>)),
                 map(([v]) => v)
             )
 export const filterThatLatestEquals = <F>(target$: Observable<F>) => (value: F) =>

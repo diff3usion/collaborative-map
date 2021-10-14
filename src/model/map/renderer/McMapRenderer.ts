@@ -8,7 +8,7 @@ import json from './map_color_table.json'
 import { newRegion$ } from ".."
 import { RenderedRegion$ } from "../../../store/MapData"
 import { imageDataToDataUrl, initTempCanvas } from "../../../utils/dom"
-import { init2dArray, initArray } from "../../../utils/collection"
+import { doubleArrayInit, arrayInit } from "../../../utils/collection"
 
 
 type Color = [number, number, number, number]
@@ -45,7 +45,7 @@ const renderRegion: (region: MapRegion) => Promise<MapRegion>
                 return colorValues[colorIndex]
             }
 
-        const colorMatrix = init2dArray(region.xLength, region.zLength, () => initArray(4, () => 0) as Color)
+        const colorMatrix = doubleArrayInit(region.xLength, region.zLength, () => arrayInit(4, () => 0) as Color)
         for (let x = 0; x < region.xLength; x++)
             for (let z = 0; z < region.zLength; z++) {
                 const location = region.locationWithOffset(x, z)
