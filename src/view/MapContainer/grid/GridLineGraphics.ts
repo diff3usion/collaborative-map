@@ -1,5 +1,5 @@
 import { Graphics, Text } from "pixi.js"
-import { PickWithPrefix, PlaneAxis, PlaneVector, Viewport } from "../../../Type"
+import { PickWithPrefix, PlaneAxis, PlaneVector } from "../../../Type"
 import { someDiffProperties } from "../../../utils/object"
 import { GridData } from "./GridData"
 

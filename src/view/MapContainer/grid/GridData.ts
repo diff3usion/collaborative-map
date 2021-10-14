@@ -1,6 +1,5 @@
-import { PerAxis, PlaneAxis, SizedViewport, Viewport, PlaneRect, PlaneSize } from "../../../Type"
+import { PerAxis, PlaneAxis, PlaneRect, PlaneSize } from "../../../Type"
 import { arrayInit as arrayInit, mapInit } from "../../../utils/collection"
-import { positionShift } from "../../../utils/geometry"
 import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils/math"
 import { fromAxis } from "../../../utils/object"
 
@@ -25,22 +24,20 @@ export module GridData {
     function sizeToLineGap(
         { minLineGap, maxLineGap, desiredLineCount }: Options,
         size: PlaneSize,
-        scale: number,
     ): number {
         return numberBounded(
             minLineGap,
             maxLineGap,
-            Math.min(...size.map(s => nearestSmallerPowerOf2(s / scale / desiredLineCount)))
+            Math.min(...size.map(s => nearestSmallerPowerOf2(s / desiredLineCount)))
         )
     }
     function linePositions(
         delta: number,
         range: number,
         gap: number,
-        scale: number,
     ): number[] {
-        const start = Math.ceil(delta / scale / gap) * gap
-        const count = Math.ceil(Math.floor(range / scale - (start - delta / scale)) / gap)
+        const start = Math.ceil(delta / gap) * gap
+        const count = Math.ceil(Math.floor(range - (start - delta)) / gap)
         return arrayInit(count, idx => start + idx * gap)
     }
     function initLine(
@@ -62,30 +59,16 @@ export module GridData {
         return mapInit(positions, p => initLine(axis, length, p))
     }
 
-    export function fromSizedViewport(
-        { size, viewport: { position: [x, y], scale } }: SizedViewport,
-        options: Options,
-    ): Obj {
-        const [width, height] = size
-        const gap = sizeToLineGap(options, size, scale)
-        const deltas = [-y, -x]
-        const ranges = [height, width]
-        const lengths = [width, height]
-        const positions = fromAxis(axis => linePositions(deltas[axis], ranges[axis], gap, scale))
-        const dataMaps = fromAxis(axis => initLineMap(axis, positions[axis], lengths[axis]))
-        return { gap, ...options, ...dataMaps }
-    }
-
     export function fromRect(
         [[x, y], size]: PlaneRect,
         options: Options,
     ): Obj {
         const [width, height] = size
-        const gap = sizeToLineGap(options, size, 1)
+        const gap = sizeToLineGap(options, size)
         const deltas = [y, x]
         const ranges = [height, width]
         const lengths = [width, height]
-        const positions = fromAxis(axis => linePositions(deltas[axis], ranges[axis], gap, 1))
+        const positions = fromAxis(axis => linePositions(deltas[axis], ranges[axis], gap))
         const dataMaps = fromAxis(axis => initLineMap(axis, positions[axis], lengths[axis]))
         return { gap, ...options, ...dataMaps }
     }
