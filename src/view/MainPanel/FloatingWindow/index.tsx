@@ -3,7 +3,7 @@ import { IconButton, Modal } from "@fluentui/react"
 import { ReactNode, useCallback } from "react"
 import "./FloatingWindow.css"
 import { Property } from "csstype"
-import { PlaneVector } from "../../../Type"
+import { PlaneVector } from "../../../type/geometry"
 
 type FloatingWindowProps = {
     children: ReactNode

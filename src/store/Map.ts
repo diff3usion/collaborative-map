@@ -1,5 +1,6 @@
 import { BehaviorSubject, distinctUntilChanged, map, MonoTypeOperatorFunction, OperatorFunction, Subject, withLatestFrom } from "rxjs"
-import { EventButtonType, PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport } from "../Type"
+import { EventButtonType } from "../type/event"
+import { PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport } from "../type/geometry"
 import { mapInitPluck } from "../utils/collection"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils/event"
 import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"

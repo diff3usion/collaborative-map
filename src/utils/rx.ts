@@ -1,7 +1,8 @@
 import { InteractionEvent } from "pixi.js"
-import { distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, scan, share, startWith, Subject, Subscription, switchMap, takeWhile, timer, window, withLatestFrom } from "rxjs"
+import { animationFrameScheduler, distinctUntilChanged, filter, fromEvent, map, mapTo, mergeWith, MonoTypeOperatorFunction, Observable, Observer, OperatorFunction, pairwise, partition, scan, SchedulerLike, share, startWith, Subject, Subscription, switchMap, takeWhile, timer, window, withLatestFrom } from "rxjs"
 import { HasEventTargetAddRemove, JQueryStyleEventEmitter, NodeCompatibleEventEmitter, NodeStyleEventEmitter } from "rxjs/internal/observable/fromEvent"
-import { EventButtonType, PlaneVector, Viewport } from "../Type"
+import { EventButtonType } from "../type/event"
+import { PlaneVector, Viewport } from "../type/geometry"
 import { Transition } from "./transition"
 
 //#region General Filtering
@@ -133,9 +134,9 @@ export function splitObservable<P, Q>(obs: Observable<[P, Q]>): [Observable<P>, 
 
 export function transitionTimer(
     transition: Transition<any>,
-    targetFps = 60,
+    scheduler: SchedulerLike = animationFrameScheduler,
 ): Observable<number> {
-    return timer(0, 1000 / targetFps)
+    return timer(0, 0, scheduler)
         .pipe(
             takeWhile(() => transition.ticking),
             map(_ => Date.now()),

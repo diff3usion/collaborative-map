@@ -6,7 +6,7 @@ import {
     endPointPointerDown$, endPointPointerUp$,
     startPointPointerDown$, startPointPointerUp$
 } from "../../../intent/MapMarking"
-import { PlaneVector } from "../../../Type"
+import { PlaneVector } from "../../../type/geometry"
 import { EllipseMarker, LineMarker, MarkerGraphics, MarkerOptions, PolygonMarker, RectMarker, SinglePointMarker } from "./MarkerGraphics"
 
 

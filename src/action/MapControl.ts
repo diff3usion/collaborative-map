@@ -1,9 +1,9 @@
 import { distinctUntilChanged, filter, mapTo, merge } from "rxjs"
-import { MapControlMode } from "../Type"
 
 import { documentKeyPress$ } from "../intent"
 import { bottomControlExploreClick$, bottomControlMarkingClick$, bottomControlUploadsClick$ } from "../intent/Control"
 import { controlMode$ } from "../store/MapControl"
+import { MapControlMode } from "../type"
 
 //#region Switching Control Mode
 const controlModeSwitchActions =

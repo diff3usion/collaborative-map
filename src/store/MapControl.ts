@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs"
-import { MapControlMode } from "../Type"
+import { MapControlMode } from "../type"
 import { filterThatLatestEquals } from "../utils/rx"
 
 export const controlMode$ = new BehaviorSubject<MapControlMode>(MapControlMode.Explore)

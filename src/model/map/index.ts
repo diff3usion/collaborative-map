@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Observable, Subject, map, filter } from "rxjs"
 
-import { PlaneRect, PlaneVector } from '../../Type'
+import { PlaneRect, PlaneVector } from '../../type/geometry'
 import { doesTwoRectsOverlap } from "../../utils/geometry"
 import { MapLocation, MapRegion, UnIndexedRegion } from "./Data"
 

@@ -1,5 +1,6 @@
 import { Graphics, Text } from "pixi.js"
-import { PickWithPrefix, PlaneAxis, PlaneVector } from "../../../Type"
+import { PlaneVector, PlaneAxis } from "../../../type/geometry"
+import { PickWithPrefix } from "../../../type/object"
 import { someDiffProperties } from "../../../utils/object"
 import { GridData } from "./GridData"
 
@@ -33,7 +34,7 @@ export module GridLineGraphics {
     ): PlaneVector {
         return axis === PlaneAxis.X ? [8, 4] : [4, 8]
     }
-    function move(
+    function place(
         line: Obj,
     ): void {
         const { graphics } = line
@@ -77,7 +78,7 @@ export module GridLineGraphics {
         const needRefreshAlpha = needDraw || someDiffProperties(line, data, ['alpha'])
         const needRefreshText = someDiffProperties(line, data, ['label'])
         Object.assign(line, data)
-        if (needMove) move(line)
+        if (needMove) place(line)
         if (needDraw) draw(line)
         if (needRefreshText) refreshText(line)
         if (needRefreshAlpha) refreshAlpha(line)
@@ -87,7 +88,7 @@ export module GridLineGraphics {
         data: Data,
     ): Obj {
         const res: Obj = { ...data, graphics: new Graphics() }
-        move(res)
+        place(res)
         draw(res)
         refreshText(res)
         refreshAlpha(res)

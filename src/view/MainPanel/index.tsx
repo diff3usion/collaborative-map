@@ -11,7 +11,7 @@ import "./MainPanel.css"
 import { MarkingTypeControl, markingTypeControlWidth } from "./MarkingSubControl";
 import { MapContainer } from "../MapContainer";
 import { controlMode$ } from "../../store/MapControl";
-import { MapControlMode } from "../../Type";
+import { MapControlMode } from "../../type";
 import { markingMode$ } from "../../store/MapMarking";
 import { MarkerEditor } from "../MarkerEditor";
 

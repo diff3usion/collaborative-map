@@ -19,7 +19,7 @@ import { markingContainer } from "./marker/Marking"
 import { mapContainer } from "./Map"
 import { observeEvent } from "../../utils/rx"
 import { gridContainer } from "./grid/"
-import { PlaneVector } from "../../Type"
+import { PlaneVector } from "../../type/geometry"
 
 PIXI.settings.FILTER_RESOLUTION = devicePixelRatio
 

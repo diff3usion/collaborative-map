@@ -1,4 +1,4 @@
-import { PerAxis, PlaneAxis, PlaneRect, PlaneSize } from "../../../Type"
+import { PerAxis, PlaneAxis, PlaneRect, PlaneSize } from "../../../type/geometry"
 import { arrayInit as arrayInit, mapInit } from "../../../utils/collection"
 import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils/math"
 import { fromAxis } from "../../../utils/object"

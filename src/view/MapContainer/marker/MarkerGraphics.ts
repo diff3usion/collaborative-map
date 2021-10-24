@@ -1,7 +1,7 @@
 import { Graphics, Text, Point, Ticker } from "pixi.js"
 import { Observable, Observer, Subscription } from "rxjs"
 import { markingContainer } from "./Marking"
-import { PlaneVector, Viewport } from "../../../Type"
+import { PlaneVector, Viewport } from "../../../type/geometry"
 import { planeVectorShift, vectorAbs, vectorMinus } from "../../../utils/geometry"
 import { TransitionTicker } from "../../../utils/pixi"
 import { transitionArray, linear, transitionVector } from "../../../utils/transition"

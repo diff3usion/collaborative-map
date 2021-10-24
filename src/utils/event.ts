@@ -1,4 +1,4 @@
-import { PlaneVector, Viewport } from "../Type";
+import { PlaneVector, Viewport } from "../type/geometry";
 
 export const eventToClientPlaneVector: (event: { clientX: number, clientY: number }) => PlaneVector
     = e => [e.clientX, e.clientY]

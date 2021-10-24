@@ -1,5 +1,5 @@
 import { InteractionEvent, Point, Ticker, TickerCallback } from "pixi.js";
-import { PlaneVector } from "../Type";
+import { PlaneVector } from "../type/geometry";
 import { Transition, TransitionData, TransitionRevisedData } from "./transition";
 
 export const pointToVector: (p: Point) => PlaneVector

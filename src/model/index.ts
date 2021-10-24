@@ -1,5 +1,5 @@
 import { mergeMap, from, filter, map, tap } from "rxjs";
-import { PlaneSize, PlaneVector } from "../Type";
+import { PlaneSize, PlaneVector } from "../type/geometry";
 import { arrayInit } from "../utils/collection";
 import { imageDataToDataUrl, loadBlobAsArrayBuffer } from "../utils/dom";
 import { isPointInRect } from "../utils/geometry";

@@ -1,6 +1,7 @@
 import { numberBounded } from "./math"
-import { PlaneVector, PlaneSegment, PlaneRect, NumTuple, Viewport, NumMatrix, PlaneSize, MatrixOf, TupleOf, PlaneAxis } from "../Type"
 import { arrayInit, doubleArrayInit, doubleArrayMap } from "./collection"
+import { PlaneVector, PlaneLineSegment, PlaneRect, PlaneAxis, Viewport, PlaneSize } from "../type/geometry"
+import { TupleOf, MatrixOf, NumTuple, NumMatrix } from "../type/collection"
 
 export const initTuple = arrayInit as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
 export const initMatrix = doubleArrayInit as <T, R extends number, C extends number>(row: R, col: C, producer: (row: number, col: number) => T) => MatrixOf<T, R, C>
@@ -50,11 +51,11 @@ export const threePointsCCW: (p0: PlaneVector, p1: PlaneVector, p2: PlaneVector)
     = ([ax, ay], [bx, by], [cx, cy]) =>
         (cy - ay) * (bx - ax) > (by - ay) * (cx - ax)
 
-export const twoSegmentsIntersect: (s0: PlaneSegment, s1: PlaneSegment) => boolean
+export const twoSegmentsIntersect: (s0: PlaneLineSegment, s1: PlaneLineSegment) => boolean
     = ([a, b], [c, d]) =>
         threePointsCCW(a, c, d) != threePointsCCW(b, c, d) && threePointsCCW(a, b, c) != threePointsCCW(a, b, d)
 
-export function segmentIntersectPath(s: PlaneSegment, p: PlaneVector[]): number {
+export function segmentIntersectPath(s: PlaneLineSegment, p: PlaneVector[]): number {
     for (let i = 0; i < p.length - 1; i++)
         if (twoSegmentsIntersect(s, [p[i], p[i + 1]])) return i
     return -1
@@ -80,7 +81,7 @@ export const doesTwoRectsOverlap: (r1: PlaneRect, r2: PlaneRect) => boolean
     = ([[x1, y1], [w1, h1]], [[x2, y2], [w2, h2]]) =>
         x1 < x2 + w2 && x1 + w1 > x2 && y1 + h1 > y2 && y1 < y2 + h2
 
-// Shift: input (relative to stage viewport) --> output (relative to canvas display)
+// Shift: inputs in terms of stage coordinates --> outputs in terms of canvas coordinates (according to the viewport)
 
 export function positionShift(
     n: number,

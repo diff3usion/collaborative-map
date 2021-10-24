@@ -8,7 +8,7 @@ import { useBehaviorSubjectAsState, useEventObservedCallback } from "../../../ut
 import { BottomButton, BottomButtonStyle } from '../BottomButton'
 import { CssVariables } from "../../"
 import { bottomControlExploreClick$, bottomControlMarkingClick$, bottomControlUploadsClick$ } from "../../../intent/Control"
-import { MapControlMode } from "../../../Type"
+import { MapControlMode } from "../../../type"
 import { controlMode$ } from "../../../store/MapControl"
 
 initializeIcons()

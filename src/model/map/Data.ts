@@ -1,6 +1,6 @@
 import _ from "lodash"
 import { BlockState as UnIndexedState } from ".."
-import { PlaneRect } from "../../Type"
+import { PlaneRect } from "../../type/geometry"
 import { bytesToNumber, numberToBytes } from "../../utils/math"
 import { arrayInit } from "../../utils/collection"
 

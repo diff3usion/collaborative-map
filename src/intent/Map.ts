@@ -1,5 +1,6 @@
 import { map, shareReplay, Subject } from "rxjs"
-import { EventButtonType, PlaneVector } from "../Type"
+import { EventButtonType } from "../type/event"
+import { PlaneVector } from "../type/geometry"
 import { distinctPlaneVector, filterEventButton } from "../utils/rx"
 
 export const canvasResizeObserverEntry$: Subject<ResizeObserverEntry> = new Subject()

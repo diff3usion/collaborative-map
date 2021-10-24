@@ -1,6 +1,5 @@
 import { distinctUntilChanged, map, tap, withLatestFrom, of, merge, share, scan, mapTo, OperatorFunction, MonoTypeOperatorFunction } from "rxjs";
 import { markingTypeDropdownKeyMap } from "../Constant";
-import { MapMarkingStage, PlaneVector } from "../Type";
 import { eventToPosition } from "../utils/event";
 import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
 import { distinctPlaneVector, mapToLastestFrom, windowEachStartWith } from "../utils/rx";
@@ -11,6 +10,8 @@ import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../int
 import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
 import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, mapToFittedviewport } from "../store/Map";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
+import { MapMarkingStage } from "../type";
+import { PlaneVector } from "../type/geometry";
 
 function filterMayDrawNewPoint<T>(): MonoTypeOperatorFunction<T> {
     return ob => ob.pipe(

@@ -1,6 +1,7 @@
 import { Observable, withLatestFrom, map } from "rxjs"
 import { markingMode$ } from "../../../store/MapMarking"
-import { PlaneVector, MapMarkingMode } from "../../../Type"
+import { MapMarkingMode } from "../../../type"
+import { PlaneVector } from "../../../type/geometry"
 import { segmentIntersectPath } from "../../../utils/geometry"
 import { MarkerGraphics } from "./MarkerGraphics"
 import {

@@ -1,6 +1,6 @@
 import { Container } from "pixi.js"
 import { Subject, map, tap } from "rxjs"
-import { PerAxis, PlaneAxis, PlaneRect, SizedViewport, Viewport } from "../../../Type"
+import { PerAxis, PlaneAxis, PlaneRect, SizedViewport, Viewport } from "../../../type/geometry"
 import { Diff, MapDiff, twoMapsDiff } from "../../../utils/collection"
 import { planeRectUnshift, positionShift } from "../../../utils/geometry"
 import { fromAxis } from "../../../utils/object"
@@ -65,8 +65,8 @@ export function gridMapsDiff(
 
 const gridUpdate$ = new Subject<SizedViewport>()
 
-function rectFromSizedViewport(svp: SizedViewport): PlaneRect {
-    return planeRectUnshift([[0, 0], svp.size], svp.viewport)
+function rectFromSizedViewport({ size, viewport }: SizedViewport): PlaneRect {
+    return planeRectUnshift([[0, 0], size], viewport)
 }
 gridUpdate$
     .pipe(

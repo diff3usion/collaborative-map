@@ -1,4 +1,5 @@
-import { EnumRecord, PlaneAxis, PerAxis } from "../Type"
+import { PlaneAxis, PerAxis } from "../type/geometry"
+import { EnumRecord } from "../type/object"
 import { arrayFilterIn } from "./collection"
 
 

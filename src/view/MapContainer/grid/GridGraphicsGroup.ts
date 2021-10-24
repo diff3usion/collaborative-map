@@ -1,5 +1,6 @@
 import { Container } from "pixi.js"
-import { PlaneAxis, Overwrite } from "../../../Type"
+import { PlaneAxis } from "../../../type/geometry"
+import { Overwrite } from "../../../type/object"
 import { fromAxis } from "../../../utils/object"
 import { GridData } from "./GridData"
 import { GridLineGraphics } from "./GridLineGraphics"

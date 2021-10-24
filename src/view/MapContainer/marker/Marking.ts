@@ -1,7 +1,7 @@
 import { Container } from 'pixi.js'
 import { filter, map, mapTo, mergeWith, Observable, pairwise, Subject, tap, withLatestFrom } from 'rxjs'
 import { confirmedPoints$, markingStage$, placedPoints$, tempPoint$ } from '../../../store/MapMarking'
-import { MapMarkingStage } from '../../../Type'
+import { MapMarkingStage } from '../../../type'
 import { filterWithLatestFrom, mergeWithSignalAs, partitionWithLatestFrom } from '../../../utils/rx'
 import { mapToMarkingGraphicGroup as mapToMarkingGraphicsGroup, MarkingGraphicsGroup, MarkingGraphicsType } from './MarkingGraphicsGroup'
 

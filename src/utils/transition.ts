@@ -1,5 +1,7 @@
+import { AnimationOptions } from "../type"
+import { NumTuple } from "../type/collection"
+import { Viewport } from "../type/geometry"
 import { numberBounded } from "./math"
-import { AnimationOptions, NumTuple, Viewport } from "../Type"
 import { binaryOperatorWithArgs } from "./object"
 
 export type TransitionFn<T> = (from: T, to: T, t: number) => T

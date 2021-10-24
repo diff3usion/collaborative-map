@@ -1,5 +1,5 @@
 import { map, shareReplay, Subject } from "rxjs";
-import { PlaneVector } from "../Type";
+import { PlaneVector } from "../type/geometry";
 import { distinctPlaneVector } from "../utils/rx";
 
 export const mainPanelResizeObserverEntry$: Subject<ResizeObserverEntry> = new Subject()

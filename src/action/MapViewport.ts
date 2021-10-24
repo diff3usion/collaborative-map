@@ -1,5 +1,4 @@
 import { map, withLatestFrom, switchMap, tap, filter, pairwise, merge, Observable, OperatorFunction, Subject, startWith, share, MonoTypeOperatorFunction, combineLatestWith } from "rxjs"
-import { PlaneVector, TupleOf, Viewport } from "../Type"
 import { eventToPosition } from "../utils/event"
 import { scaleWithFixedPoint, vectorDist, vectorMean, vectorMinus, vectorNorm } from "../utils/geometry"
 import { twoNumbersSameSign, numberBounded } from "../utils/math"
@@ -9,6 +8,8 @@ import { linear, Transition, transitionViewport, TransitionOptions } from "../ut
 import { canvasWheel$, canvasPointerMove$, mainButtonDown$, canvasSize$ } from "../intent/Map"
 import { viewport$, scale$, canvasPointersCurrentlyDown$, filterPointerDownCount, filterSinglePointerIsDown, canvasPointersDownAndMovedIdMap$, sizedViewport$ } from "../store/Map"
 import { filterIsExploreMode } from "../store/MapExplore"
+import { TupleOf } from "../type/collection"
+import { PlaneVector, Viewport } from "../type/geometry"
 
 const maxScale = 64
 const minScale = 1 / 8
@@ -188,7 +189,6 @@ const wheelZoomViewportTransitionOptions: TransitionOptions<Viewport> = {
     duration: 200,
     fn: transitionViewport(linear),
 }
-const wheelZoomViewportTransitionTargetFps = 120
 const wheelZoomViewportTransition$ = wheelZoomViewport$
     .pipe(
         filterLatestTransitionNotTicking(),
@@ -198,7 +198,7 @@ const wheelZoomViewportTransition$ = wheelZoomViewport$
             from, to,
             apply: () => { }
         })),
-        tap(transition => transitionTimer(transition.start(), wheelZoomViewportTransitionTargetFps)
+        tap(transition => transitionTimer(transition.start())
             .subscribe(transitionObserver(transition))),
         share(),
     )
