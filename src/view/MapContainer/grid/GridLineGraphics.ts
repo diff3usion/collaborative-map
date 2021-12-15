@@ -1,38 +1,50 @@
-import { Graphics, Text } from "pixi.js"
-import { PlaneVector, PlaneAxis } from "../../../type/geometry"
+import * as PIXI from "pixi.js"
+import { PlaneVector, PlaneAxis } from "../../../type/plane"
 import { PickWithPrefix } from "../../../type/object"
-import { someDiffProperties } from "../../../utils/object"
-import { GridData } from "./GridData"
+import { axisInverted, planeVectorAligned } from "../../../utils/plane"
+import { objectUpdateWithActions } from "../../../utils/object"
 
+import { GridData, GridLineData } from "./GridData"
+
+const labelOffsetX: PlaneVector = [8, 4]
+const labelOffsetY: PlaneVector = [4, 8]
+
+export type GridLineGraphics = GridLineGraphics.Obj
+export type GridLineStyleProvider = GridLineGraphics.StyleProvider
 export module GridLineGraphics {
-    export type RelativeData = PickWithPrefix<'relative', GridData.Line, 'length' | 'position'>
+    export type TransformedData = PickWithPrefix<'transformed', GridData.Line, 'length' | 'position'>
     export type Style = {
         width: number
         color: number
         alpha: number
         label?: string
     }
-    export type Data = GridData.Line & RelativeData & Style
+    export type StyleProvider = (
+        line: GridLineData,
+        grid: GridData,
+        relativeData: GridLineGraphics.TransformedData,
+    ) => GridLineGraphics.Style
+    export type Props = GridLineData & TransformedData & Style
     export type State = {
-        graphics: Graphics
-        labelText?: Text
+        graphics: PIXI.Graphics
+        labelText?: PIXI.Text
     }
-    export type Obj = Data & State
+    export type Obj = Props & State
 
     function positionPoint(
-        { axis, relativePosition }: Obj
+        { axis, transformedPosition }: Obj
     ): PlaneVector {
-        return axis === PlaneAxis.X ? [0, relativePosition] : [relativePosition, 0]
+        return planeVectorAligned(axisInverted(axis), transformedPosition)
     }
     function lineToEndPoint(
-        { axis, relativeLength }: Obj
+        { axis, transformedLength }: Obj
     ): PlaneVector {
-        return axis === PlaneAxis.X ? [relativeLength, 0] : [0, relativeLength]
+        return planeVectorAligned(axis, transformedLength)
     }
     function labelPositionPoint(
-        { axis }: GridData.Line
+        { axis }: GridLineData
     ): PlaneVector {
-        return axis === PlaneAxis.X ? [8, 4] : [4, 8]
+        return axis === PlaneAxis.X ? labelOffsetX : labelOffsetY
     }
     function place(
         line: Obj,
@@ -57,7 +69,7 @@ export module GridLineGraphics {
         labelText?.destroy()
         line.labelText = undefined
         if (label) {
-            line.labelText = new Text(label, { fontSize: 16 })
+            line.labelText = new PIXI.Text(label, { fontSize: 16 })
             line.labelText.position.set(...labelPositionPoint(line))
             graphics.addChild(line.labelText)
         }
@@ -71,23 +83,20 @@ export module GridLineGraphics {
 
     export function update(
         line: Obj,
-        data: Data,
+        data: Props,
     ): Obj {
-        const needDraw = someDiffProperties(line, data, ['label', 'length', 'color', 'width', 'relativeLength'])
-        const needMove = needDraw || someDiffProperties(line, data, ['relativePosition'])
-        const needRefreshAlpha = needDraw || someDiffProperties(line, data, ['alpha'])
-        const needRefreshText = someDiffProperties(line, data, ['label'])
-        Object.assign(line, data)
-        if (needMove) place(line)
-        if (needDraw) draw(line)
-        if (needRefreshText) refreshText(line)
-        if (needRefreshAlpha) refreshAlpha(line)
+        objectUpdateWithActions(line, data, [
+            [place, 'transformedPosition'],
+            [draw, 'label', 'length', 'color', 'width', 'transformedLength'],
+            [refreshText, 'label'],
+            [refreshAlpha, 'alpha'],
+        ])
         return line
     }
     export function init(
-        data: Data,
+        data: Props,
     ): Obj {
-        const res: Obj = { ...data, graphics: new Graphics() }
+        const res: Obj = { ...data, graphics: new PIXI.Graphics() }
         place(res)
         draw(res)
         refreshText(res)

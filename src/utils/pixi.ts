@@ -1,5 +1,6 @@
 import { InteractionEvent, Point, Ticker, TickerCallback } from "pixi.js";
-import { PlaneVector } from "../type/geometry";
+import { MonoTypeOperatorFunction, filter } from "rxjs";
+import { PlaneVector } from "../type/plane";
 import { Transition, TransitionData, TransitionRevisedData } from "./transition";
 
 export const pointToVector: (p: Point) => PlaneVector
@@ -10,6 +11,13 @@ export const eventToGlobalPosition: (e: InteractionEvent) => PlaneVector
 
 export const eventToTargetRelativePosition: (e: InteractionEvent) => PlaneVector
     = ({ currentTarget: { position: { x, y } } }) => [x, y]
+
+export function filterWithoutTarget(): MonoTypeOperatorFunction<InteractionEvent> {
+    return filter(e => !e.currentTarget)
+}
+export function filterWithTarget(): MonoTypeOperatorFunction<InteractionEvent> {
+    return filter(e => e.currentTarget !== undefined && e.currentTarget !== null)
+}
 
 export class TransitionTicker<T> {
     private callback?: TickerCallback<any>

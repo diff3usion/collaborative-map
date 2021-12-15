@@ -1,3 +1,6 @@
+type TypeEquals<T, F, Y = true, N = false> =
+    T extends F ? F extends T ? Y : N : N
+
 export interface AnimationOptions {
     duration: number,
 }

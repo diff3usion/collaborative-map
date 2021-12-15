@@ -4,6 +4,7 @@ import * as PIXI from "pixi.js"
 import { InteractionManager } from "pixi.js"
 import { useEffect, useMemo, useRef } from "react"
 
+import { PlaneVector } from "../../type/plane"
 import { mainPanelSize$ } from "../../intent/MainPanel"
 import { useEventObserver, useObservable, useResizeObserver } from '../../utils/hook'
 import { rendererCursorStyle$ } from "../../store/Map"
@@ -17,9 +18,7 @@ import {
 } from "../../intent/Map"
 import { markingContainer } from "./marker/Marking"
 import { mapContainer } from "./Map"
-import { observeEvent } from "../../utils/rx"
-import { gridContainer } from "./grid/"
-import { PlaneVector } from "../../type/geometry"
+import { gridContainer } from "./Grid"
 
 PIXI.settings.FILTER_RESOLUTION = devicePixelRatio
 

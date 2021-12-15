@@ -1,7 +1,7 @@
 import { BehaviorSubject, Subject } from "rxjs"
 import { markingTypeMaxPointsMap } from "../Constant"
 import { MapControlMode, MapMarkingMode, MapMarkingStage } from "../type"
-import { PlaneVector } from "../type/geometry"
+import { PlaneVector } from "../type/plane"
 import { filterWithMultipleLatestFrom, filterThatLatestEquals } from "../utils/rx"
 import { filterControlMode } from "./MapControl"
 

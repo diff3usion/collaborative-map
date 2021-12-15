@@ -1,3 +1,6 @@
+import { TupleOf } from "./collection"
+import { PlaneVector } from "./plane"
+
 export enum PointerEventType {
     Move,
     Down,
@@ -25,3 +28,7 @@ export enum EventButtonsBit {
     Fourth = 1 << 3,
     Fifth = 1 << 4,
 }
+
+export type GestureEvent<T extends number> = TupleOf<PointerEvent, T>
+export type GesturePosition<T extends number> = TupleOf<PlaneVector, T>
+export type GesturePositionPair<T extends number> = [GesturePosition<T>, GesturePosition<T>]

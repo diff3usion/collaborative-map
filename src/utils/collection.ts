@@ -1,16 +1,47 @@
-export type MapDiff<K, V> = {
-    addition: Map<K, V>
-    deletion: Map<K, V>
-    update: Map<K, [V, V]>
+import { MapDiff, MatrixOf, SetDiff, TupleOf } from "../type/collection"
+
+export class TwoWayMap<K, V> extends Map<K, V> {
+    private _reversed: Map<V, K> = new Map()
+
+    private constructor() {
+        super()
+    }
+    static from<K, V>(iterable?: Iterable<readonly [K, V]>): TwoWayMap<K, V> {
+        const res = new TwoWayMap<K, V>()
+        if (iterable) for (let [k, v] of iterable) res.set(k, v)
+        return res
+    }
+
+    clear(): void {
+        super.clear()
+        this._reversed.clear()
+    }
+    delete(key: K): boolean {
+        const value = this.get(key)
+        if (value) this._reversed.delete(value)
+        return super.delete(key)
+    }
+    set(key: K, value: V): this {
+        super.set(key, value)
+        this._reversed.set(value, key)
+        return this
+    }
+
+    get reversed(): Map<V, K> {
+        return new Map(this._reversed)
+    }
+    reverseGet(value: V): K | undefined {
+        return this._reversed.get(value)
+    }
+    reverseHas(value: V): boolean {
+        return this._reversed.has(value)
+    }
+    reverseDelete(value: V): boolean {
+        const key = this._reversed.get(value)
+        if (key) super.delete(key)
+        return this._reversed.delete(value)
+    }
 }
-export type SetDiff<T> = {
-    addition: Set<T>
-    deletion: Set<T>
-}
-export type Diff<T extends Map<any, any> | Set<any>>
-    = T extends Map<infer K, infer V> ? MapDiff<K, V>
-    : T extends Set<infer T> ? SetDiff<T>
-    : never
 export class DiffRecordedMap<K, V> extends Map<K, V> {
     private _actions?: MapDiff<K, V>
 
@@ -111,7 +142,6 @@ export class DiffRecordedSet<T> extends Set<T> {
         return this._actions
     }
 }
-
 export function twoMapsDiff<K, V>(
     map0: Map<K, V>,
     map1: Map<K, V>,
@@ -135,7 +165,6 @@ export function twoMapsDiff<K, V>(
     })
     return { addition, deletion, update }
 }
-
 export function twoSetsDiff<T>(
     set0: Set<T>,
     set1: Set<T>
@@ -145,61 +174,34 @@ export function twoSetsDiff<T>(
     return { addition, deletion }
 }
 
-export class TwoWayMap<K, V> extends Map<K, V> {
-    private _reversed: Map<V, K> = new Map()
-
-    private constructor() {
-        super()
-    }
-    static from<K, V>(iterable?: Iterable<readonly [K, V]>): TwoWayMap<K, V> {
-        const res = new TwoWayMap<K, V>()
-        if (iterable) for (let [k, v] of iterable) res.set(k, v)
-        return res
-    }
-
-    clear(): void {
-        super.clear()
-        this._reversed.clear()
-    }
-    delete(key: K): boolean {
-        const value = this.get(key)
-        if (value) this._reversed.delete(value)
-        return super.delete(key)
-    }
-    set(key: K, value: V): this {
-        super.set(key, value)
-        this._reversed.set(value, key)
-        return this
-    }
-
-    get reversed(): Map<V, K> {
-        return new Map(this._reversed)
-    }
-    reverseGet(value: V): K | undefined {
-        return this._reversed.get(value)
-    }
-    reverseHas(value: V): boolean {
-        return this._reversed.has(value)
-    }
-    reverseDelete(value: V): boolean {
-        const key = this._reversed.get(value)
-        if (key) super.delete(key)
-        return this._reversed.delete(value)
-    }
-}
-
-export function arrayFill<T>(length: number, value: T): T[] {
-    return new Array(length).fill(0).map(() => value)
-}
+//#region array init
 export function arrayInit<T>(length: number, producer: (index: number) => T): T[] {
     return new Array(length).fill(0).map((_, index) => producer(index))
 }
+export function arrayInitWith<T>(length: number, value: T): T[] {
+    return arrayInit(length, () => value)
+}
+export const tupleInit = arrayInit as <T, L extends number>(length: L, producer: (index: number) => T) => TupleOf<T, L>
+export const tupleInitWith = arrayInitWith as <T, L extends number>(length: L, value: T) => TupleOf<T, L>
+export const tupleMap = <T, L extends number, R>(tuple: TupleOf<T, L>, project: (value: T, index: number) => R) => tuple.map(project) as TupleOf<T, L>
+//#endregion
+
+//#region double array
 export function doubleArrayInit<T>(row: number, col: number, producer: (row: number, col: number) => T): T[][] {
     return new Array(row).fill(0).map((_, r) => new Array(col).fill(0).map((_, c) => producer(r, c)))
 }
-export function doubleArrayMap<T, F>(arr: T[][], producer: (val: T, row: number, col: number) => F): F[][] {
-    return arr.map((row, r) => row.map((val, c) => producer(val, r, c)))
+export function doubleArrayInitWith<T>(row: number, col: number, value: T): T[][] {
+    return doubleArrayInit(row, col, () => value)
 }
+export function doubleArrayMap<T, F>(arr: T[][], project: (val: T, row: number, col: number) => F): F[][] {
+    return arr.map((row, r) => row.map((val, c) => project(val, r, c)))
+}
+export const matrixInit = doubleArrayInit as <T, R extends number, C extends number>(row: R, col: C, producer: (row: number, col: number) => T) => MatrixOf<T, R, C>
+export const matrixInitWith = doubleArrayInitWith as <T, R extends number, C extends number>(row: R, col: C, value: T) => MatrixOf<T, R, C>
+export const matrixMap = doubleArrayMap as <T, R extends number, C extends number>(m: MatrixOf<T, R, C>, project: (val: T, row: number, col: number) => T) => MatrixOf<T, R, C>
+//#endregion
+
+//#region array in set
 interface PredicateCollection<T> { has(key: T): boolean }
 export function arraySomeIn<T>(arr: T[], collection: PredicateCollection<T>): boolean {
     return arr.some(c => collection.has(c))
@@ -219,7 +221,9 @@ export function arrayFilterIn<T>(arr: T[], collection: PredicateCollection<T>): 
 export function arrayFilterNotIn<T>(arr: T[], collection: PredicateCollection<T>): T[] {
     return arr.filter(c => !collection.has(c))
 }
+//#endregion
 
+//#region map
 export function mapInit<K, V>(arr: K[], mapper: (key: K) => V): Map<K, V> {
     return new Map(arr.map(k => [k, mapper(k)]))
 }
@@ -230,6 +234,12 @@ export function mapMap<K, V, T, F>(map: Map<K, V>, mapper: (k: K, v: V) => [T, F
     const res = new Map<T, F>()
     map.forEach((v, k) => res.set(...mapper(k, v)))
     return res
+}
+export function mapMapKey<K, V, T>(map: Map<K, V>, mapper: (k: K, v: V) => T): Map<T, V> {
+    return mapMap(map, (k, v) => [mapper(k, v), v])
+}
+export function mapMapValue<K, V, T>(map: Map<K, V>, mapper: (v: V, k: K) => T): Map<K, T> {
+    return mapMap(map, (k, v) => [k, mapper(v, k)])
 }
 export function mapPluck<K, V, P extends keyof V>(map: Map<K, V>, prop: P): Map<K, V[P]> {
     const res = new Map<K, V[P]>()
@@ -246,12 +256,6 @@ export function mapPartition<K, V>(map: Map<K, V>, predicate: (k: K, v: V) => bo
     map.forEach((v, k) => res[predicate(k, v) ? 0 : 1].set(k, v))
     return res
 }
-export function mapMapKey<K, V, T>(map: Map<K, V>, mapper: (k: K, v: V) => T): Map<T, V> {
-    return mapMap(map, (k, v) => [mapper(k, v), v])
-}
-export function mapMapValue<K, V, T>(map: Map<K, V>, mapper: (v: V, k: K) => T): Map<K, T> {
-    return mapMap(map, (k, v) => [k, mapper(v, k)])
-}
 export function mapGetOrInit<K, V>(map: Map<K, V>, key: K, val: V): V {
     return map.has(key) ? map.get(key)! : map.set(key, val).get(key)!
 }
@@ -260,7 +264,7 @@ export function arrayMapPushOrInit<T, F>(map: Map<T, F[]>, key: T, value: F): vo
 }
 export function setMapAddOrInit<T, F>(map: Map<T, Set<F>>, key: T, value: F): void {
     map.has(key) ? map.get(key)!.add(value) : map.set(key, new Set([value]))
-}export function mapAdd<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, V]>): Map<K, V> {
+} export function mapAdd<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, V]>): Map<K, V> {
     for (let [k, v] of iterable) map.set(k, v)
     return map
 }
@@ -272,7 +276,9 @@ export function mapRemove<K, V>(map: Map<K, V>, iterable: Iterable<readonly [K, 
     for (let [k, v] of iterable) if (map.get(k) === v) map.delete(k)
     return map
 }
+//#endregion
 
+//#region set
 export function setAdd<T>(set: Set<T>, iterable: Iterable<T>): Set<T> {
     for (let v of iterable) set.add(v)
     return set
@@ -311,3 +317,4 @@ export function twoSetEqual<T>(a: Set<T>, b: Set<T>): boolean {
     a.forEach(v => { if (!b.has(v)) return false })
     return true
 }
+//#endregion

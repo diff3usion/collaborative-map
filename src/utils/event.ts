@@ -1,4 +1,7 @@
-import { PlaneVector, Viewport } from "../type/geometry";
+import { MonoTypeOperatorFunction, filter } from "rxjs";
+import { EventButtonType } from "../type/event";
+import { PlaneVector } from "../type/plane";
+import { Viewport } from "../type/viewport";
 
 export const eventToClientPlaneVector: (event: { clientX: number, clientY: number }) => PlaneVector
     = e => [e.clientX, e.clientY]
@@ -28,3 +31,11 @@ export const globalToRelativePosition: (globalPosition: PlaneVector, viewport: V
 export const relativeToGlobalPosition: (relativePosition: PlaneVector, viewport: Viewport) => PlaneVector
     = ([relativeX, relativeY], { position: [posX, posY], scale }) =>
         [relativeX * scale + posX, relativeY * scale + posY]
+
+
+export function filterEventButton(...acceptable: EventButtonType[]): MonoTypeOperatorFunction<PointerEvent> {
+    return filter(e => acceptable.includes(e.button))
+}
+export function filterEventId(id: number): MonoTypeOperatorFunction<PointerEvent> {
+    return filter(e => id === e.pointerId)
+}

@@ -1,8 +1,8 @@
 import _ from "lodash";
-import { Observable, Subject, map, filter } from "rxjs"
+import { Observable, Subject, map } from "rxjs"
 
-import { PlaneRect, PlaneVector } from '../../type/geometry'
-import { doesTwoRectsOverlap } from "../../utils/geometry"
+import { PlaneRect, PlaneVector } from '../../type/plane'
+import { doesTwoRectsOverlap } from "../../utils/plane";
 import { MapLocation, MapRegion, UnIndexedRegion } from "./Data"
 
 const regions: MapRegion[] = []

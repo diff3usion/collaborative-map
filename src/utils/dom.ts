@@ -1,9 +1,4 @@
-export function initTempCanvas(width: number, height: number): HTMLCanvasElement {
-    const res = document.createElement('canvas')
-    res.width = width
-    res.height = height
-    return res
-}
+//#region load blob
 export async function loadBlobAsArrayBuffer<T extends Blob>(blob: T): Promise<[T, ArrayBuffer]> {
     const fileReader = new FileReader()
     const res = new Promise<[T, ArrayBuffer]>((resolve, reject) => {
@@ -20,6 +15,15 @@ export async function loadBlobAsDataUrl<T extends Blob>(blob: T): Promise<[T, st
         fileReader.onerror = reject
     })
     fileReader.readAsDataURL(blob)
+    return res
+}
+//#endregion
+
+//#region image, canvas
+export function initTempCanvas(width: number, height: number): HTMLCanvasElement {
+    const res = document.createElement('canvas')
+    res.width = width
+    res.height = height
     return res
 }
 export async function imageDataToDataUrl(imgData: ImageData): Promise<string> {
@@ -46,3 +50,4 @@ export function urlToImageElement(url: string, width: number, height: number): H
     res.height = height
     return res
 }
+//#endregion

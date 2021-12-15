@@ -1,11 +1,13 @@
 import { Graphics, Text, Point, Ticker } from "pixi.js"
 import { Observable, Observer, Subscription } from "rxjs"
 import { markingContainer } from "./Marking"
-import { PlaneVector, Viewport } from "../../../type/geometry"
-import { planeVectorShift, vectorAbs, vectorMinus } from "../../../utils/geometry"
+import { Viewport } from "../../../type/viewport"
+import { planeVectorShift} from "../../../utils/geometry"
 import { TransitionTicker } from "../../../utils/pixi"
 import { transitionArray, linear, transitionVector } from "../../../utils/transition"
 import { viewport$ } from "../../../store/Map"
+import { vectorSubtract, vectorAbs } from "../../../utils/math"
+import { PlaneVector } from "../../../type/plane"
 
 const transitionFrames = 12
 
@@ -144,7 +146,7 @@ export class LineMarker extends MarkerGraphics implements MarkerOptions {
         this.g
             .clear()
             .lineStyle(this.lineWidth, this.lineColor, 1)
-            .lineTo(...vectorMinus(p1, p0))
+            .lineTo(...vectorSubtract(p1, p0))
     }
     protected constructor(p0: PlaneVector, p1: PlaneVector, init?: MarkerOptions) {
         super(p0, p1)
@@ -162,7 +164,7 @@ export class RectMarker extends MarkerGraphics implements MarkerOptions {
         this.g
             .clear()
             .beginFill(0xAAAAAA, 0.5)
-            .drawRect(0, 0, ...vectorMinus(p1, p0))
+            .drawRect(0, 0, ...vectorSubtract(p1, p0))
             .endFill()
     }
     protected constructor(p0: PlaneVector, p1: PlaneVector, init?: MarkerOptions) {
@@ -183,7 +185,7 @@ export class PolygonMarker extends MarkerGraphics implements MarkerOptions {
         this.g
             .clear()
             .beginFill(0xAAAAAA)
-            .drawPolygon(new Point(), ...vectors.map(v => vectorMinus(v, startPoint)).map(v => new Point(...v)))
+            .drawPolygon(new Point(), ...vectors.map(v => vectorSubtract(v, startPoint)).map(v => new Point(...v)))
             .endFill()
     }
     protected constructor(vectors: PlaneVector[], init?: MarkerOptions) {
@@ -204,7 +206,7 @@ export class EllipseMarker extends MarkerGraphics implements MarkerOptions {
         this.g
             .clear()
             .beginFill(0xAAAAAA)
-            .drawEllipse(0, 0, ...vectorAbs(vectorMinus(center, p)))
+            .drawEllipse(0, 0, ...vectorAbs(vectorSubtract(center, p)))
             .endFill()
     }
     protected constructor(center: PlaneVector, p: PlaneVector, init?: MarkerOptions) {

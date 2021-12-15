@@ -1,15 +1,17 @@
-import { map, withLatestFrom, switchMap, tap, filter, pairwise, merge, Observable, OperatorFunction, Subject, startWith, share, MonoTypeOperatorFunction, combineLatestWith } from "rxjs"
+import { map, withLatestFrom, switchMap, tap, filter, pairwise, merge, Observable, OperatorFunction, Subject, startWith, share, MonoTypeOperatorFunction } from "rxjs"
 import { eventToPosition } from "../utils/event"
-import { scaleWithFixedPoint, vectorDist, vectorMean, vectorMinus, vectorNorm } from "../utils/geometry"
-import { twoNumbersSameSign, numberBounded } from "../utils/math"
-import { distinctPlaneVector, distinctViewport, filterWithLatestFrom, transitionObservable, transitionObserver, transitionTimer, windowPairwise } from "../utils/rx"
-import { linear, Transition, transitionViewport, TransitionOptions } from "../utils/transition"
+import { scaleWithFixedPoint } from "../utils/geometry"
+import { twoNumbersSameSign, numberBounded, vectorDist, vectorMean, vectorNorm, vectorSubtract } from "../utils/math"
+import { filterWithLatestFrom, windowPairwise } from "../utils/rx"
+import { linear, Transition, transitionViewport, TransitionOptions, transitionObservable, transitionObserver, transitionTimer } from "../utils/transition"
 
-import { canvasWheel$, canvasPointerMove$, mainButtonDown$, canvasSize$ } from "../intent/Map"
-import { viewport$, scale$, canvasPointersCurrentlyDown$, filterPointerDownCount, filterSinglePointerIsDown, canvasPointersDownAndMovedIdMap$, sizedViewport$ } from "../store/Map"
+import { canvasWheel$, canvasPointerMove$, mainButtonDown$, canvasTwoFingerGesture$ } from "../intent/Map"
+import { viewport$, scale$, filterSinglePointerIsDown } from "../store/Map"
 import { filterIsExploreMode } from "../store/MapExplore"
-import { TupleOf } from "../type/collection"
-import { PlaneVector, Viewport } from "../type/geometry"
+import { PlaneVector } from "../type/plane"
+import { Viewport } from "../type/viewport"
+import { distinctViewport } from "../utils/viewport"
+import { distinctPlaneVector } from "../utils/plane"
 
 const maxScale = 64
 const minScale = 1 / 8
@@ -18,27 +20,12 @@ function initViewport(position: PlaneVector, scale: number): Viewport {
     return { position, scale }
 }
 
-//#region Gesture
-type GestureEvent<T extends number> = TupleOf<PointerEvent, T>
-type GesturePosition<T extends number> = TupleOf<PlaneVector, T>
-type GesturePositionPair<T extends number> = [GesturePosition<T>, GesturePosition<T>]
-const twoFingerGesture$: Observable<GesturePositionPair<2>> = canvasPointersDownAndMovedIdMap$
-    .pipe(
-        filterIsExploreMode(),
-        filterPointerDownCount(2),
-        map(idMap => Array.from(idMap.entries()).sort(([id0], [id1]) => id0 - id1)),
-        map(sortedEntries => sortedEntries.map(([_, e]) => e) as GestureEvent<2>),
-        map(events => events.map(eventToPosition) as GesturePosition<2>),
-        windowPairwise(canvasPointersCurrentlyDown$),
-    )
-//#endregion
-
 //#region Pan Action
 type PanData = {
     from: PlaneVector
     to: PlaneVector
 }
-const pinchPanData$: Observable<PanData> = twoFingerGesture$
+const pinchPanData$: Observable<PanData> = canvasTwoFingerGesture$
     .pipe(
         map(([[prev0, prev1], [curr0, curr1]]) => [
             vectorMean(prev0, prev1),
@@ -57,7 +44,7 @@ const pointerPanData$: Observable<PanData> = canvasPointerMove$
     )
 function mapPanDataToViewport(): OperatorFunction<PanData, Viewport> {
     return ob => ob.pipe(
-        map(({ from, to }) => vectorMinus(to, from)),
+        map(({ from, to }) => vectorSubtract(to, from)),
         filter(delta => vectorNorm(delta) < 128),
         withLatestFrom(viewport$),
         map(([[deltaX, deltaY], { position: [x, y], scale }]) => initViewport([x + deltaX, y + deltaY], scale)),
@@ -82,7 +69,6 @@ const wheelEventHoldThreshold = 100
 type ZoomData = {
     level: number
     center: PlaneVector
-    // animation: AnimationOptions
     newScale?: number
 }
 type CalculatedZoomData = Required<ZoomData>
@@ -105,12 +91,11 @@ function withWheelZoomLevelMultiplier(): OperatorFunction<WheelEvent, [WheelEven
             [currEvent, wheelZoomLevelMultiplier(prevEvent, prevTime, currEvent, currTime)]),
     )
 }
-const pinchZoomData$: Observable<ZoomData> = twoFingerGesture$
+const pinchZoomData$: Observable<ZoomData> = canvasTwoFingerGesture$
     .pipe(
         map(([[prev0, prev1], [curr0, curr1]]) => ({
             level: vectorDist(curr0, curr1) / vectorDist(prev0, prev1),
             center: vectorMean(curr0, curr1),
-            animation: { duration: 100 },
         }))
     )
 const wheelZoomData$: Observable<ZoomData> = canvasWheel$
@@ -118,9 +103,8 @@ const wheelZoomData$: Observable<ZoomData> = canvasWheel$
         filterIsExploreMode(),
         withWheelZoomLevelMultiplier(),
         map(([event, multiplier]) => ({
-            level: (1 + event.deltaY * multiplier),
+            level: numberBounded(0.5, 2, 1 + event.deltaY * multiplier),
             center: eventToPosition(event),
-            animation: { duration: 400 },
         })),
     )
 function calculateNewScale(
@@ -231,11 +215,8 @@ const allViewport$: Observable<Viewport> =
         smoothenedViewport$,
     )
 allViewport$
-    .subscribe(viewport$)
- viewport$
     .pipe(
-        combineLatestWith(canvasSize$),
-        map(([viewport, size]) => ({ size, viewport }))
+        startWith<Viewport>({ position: [0, 0], scale: 1 }),
     )
-    .subscribe(sizedViewport$)
+    .subscribe(viewport$)
 //#endregion

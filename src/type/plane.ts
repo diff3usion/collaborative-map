@@ -1,3 +1,6 @@
+import * as LA from 'gl-matrix'
+
+export type PlaneTransformation = LA.mat3
 export type PlaneVector = [number, number]
 export type PlaneSize = [number, number]
 export type PlaneRect = [PlaneVector, PlaneSize]
@@ -10,11 +13,3 @@ export enum PlaneAxis {
     Y = 1,
 }
 export type PerAxis<T> = Record<PlaneAxis, T>
-export type Viewport = {
-    position: PlaneVector
-    scale: number
-}
-export type SizedViewport = {
-    size: PlaneSize,
-    viewport: Viewport,
-}

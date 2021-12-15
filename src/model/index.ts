@@ -1,9 +1,9 @@
 import { mergeMap, from, filter, map, tap } from "rxjs";
-import { PlaneSize, PlaneVector } from "../type/geometry";
+import { PlaneSize, PlaneVector } from "../type/plane";
 import { arrayInit } from "../utils/collection";
 import { imageDataToDataUrl, loadBlobAsArrayBuffer } from "../utils/dom";
-import { isPointInRect } from "../utils/geometry";
 import { bytesToNumber } from "../utils/math";
+import { isPointInRect } from "../utils/plane";
 import json from './map/renderer/map_color_table.json'
 
 import { voxelRegionZipFiles$ } from "../intent/VoxelMapLoader";

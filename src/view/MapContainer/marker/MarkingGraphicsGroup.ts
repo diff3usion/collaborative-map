@@ -1,8 +1,7 @@
 import { Observable, withLatestFrom, map } from "rxjs"
-import { markingMode$ } from "../../../store/MapMarking"
 import { MapMarkingMode } from "../../../type"
-import { PlaneVector } from "../../../type/geometry"
-import { segmentIntersectPath } from "../../../utils/geometry"
+import { PlaneVector } from "../../../type/plane"
+import { segmentIntersectPath } from "../../../utils/plane"
 import { MarkerGraphics } from "./MarkerGraphics"
 import {
     PlacedEllipse,
@@ -16,6 +15,8 @@ import {
     TempPolygon, TempPolygonBorder,
     TempRect
 } from "./MarkingGraphics"
+
+import { markingMode$ } from "../../../store/MapMarking"
 
 export enum MarkingGraphicsType {
     Temp,

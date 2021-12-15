@@ -1,17 +1,19 @@
 import { distinctUntilChanged, map, tap, withLatestFrom, of, merge, share, scan, mapTo, OperatorFunction, MonoTypeOperatorFunction } from "rxjs";
 import { markingTypeDropdownKeyMap } from "../Constant";
 import { eventToPosition } from "../utils/event";
-import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize, vectorRound } from "../utils/geometry";
-import { distinctPlaneVector, mapToLastestFrom, windowEachStartWith } from "../utils/rx";
+import { planeVectorsBoundingRect, planeVectorUnshift, rectCenter, scaleRectWithMinSize } from "../utils/geometry";
+import { mapToLastestFrom, windowEachStartWith } from "../utils/rx";
 import { eventToTargetRelativePosition } from "../utils/pixi";
 
 import { markingTypeControlSelectedOption$ } from "../intent/Control";
 import { canvasPointerDown$, canvasPointerMove$, canvasPointerUp$ } from "../intent/Map";
 import { endPointPointerUp$, placedPointPointerUp$, tempPointPointerUp$ } from "../intent/MapMarking";
-import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, mapToFittedviewport } from "../store/Map";
+import { filterSinglePointerIsDown, mapToRelativePosition, viewport$, mapToFittedviewport, sizedViewport$ } from "../store/Map";
 import { placedPoints$, markingMode$, tempPoint$, filterCanPlaceMorePoints, confirmedPoints$, filterIsMarkingMode, filterIsDrawingStage, markingStage$ } from "../store/MapMarking";
 import { MapMarkingStage } from "../type";
-import { PlaneVector } from "../type/geometry";
+import { PlaneVector } from "../type/plane";
+import { vectorRound } from "../utils/math";
+import { distinctPlaneVector } from "../utils/plane";
 
 function filterMayDrawNewPoint<T>(): MonoTypeOperatorFunction<T> {
     return ob => ob.pipe(

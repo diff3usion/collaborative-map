@@ -1,6 +1,7 @@
+import { SchedulerLike, animationFrameScheduler, Observable, timer, takeWhile, map, pairwise, Subject, Observer } from "rxjs"
 import { AnimationOptions } from "../type"
 import { NumTuple } from "../type/collection"
-import { Viewport } from "../type/geometry"
+import { Viewport } from "../type/viewport"
 import { numberBounded } from "./math"
 import { binaryOperatorWithArgs } from "./object"
 
@@ -113,5 +114,45 @@ export class Transition<T> {
             }
         }
         return this
+    }
+}
+
+export function transitionTimer(
+    transition: Transition<any>,
+    scheduler: SchedulerLike = animationFrameScheduler,
+): Observable<number> {
+    return timer(0, 0, scheduler)
+        .pipe(
+            takeWhile(() => transition.ticking),
+            map(_ => Date.now()),
+            pairwise(),
+            map(([prevTime, currTime]) => currTime - prevTime),
+        )
+}
+export function transitionObservable<T>(
+    transition: Transition<T>,
+): Observable<T> {
+    const res$ = new Subject<T>()
+    const oldApply = transition.options.apply
+    const oldComplete = transition.options.complete
+    transition.revise({
+        apply: value => {
+            oldApply(value)
+            res$.next(value)
+        },
+        complete: () => {
+            if (oldComplete) oldComplete()
+            res$.complete()
+        },
+    })
+    return res$
+}
+export function transitionObserver(
+    transition: Transition<any>,
+): Observer<number> {
+    return {
+        next: transition.tick.bind(transition),
+        complete: transition.complete.bind(transition),
+        error: console.error
     }
 }

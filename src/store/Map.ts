@@ -1,14 +1,27 @@
-import { BehaviorSubject, distinctUntilChanged, map, MonoTypeOperatorFunction, OperatorFunction, Subject, withLatestFrom } from "rxjs"
+import { BehaviorSubject, combineLatestWith, distinctUntilChanged, map, MonoTypeOperatorFunction, Observable, OperatorFunction, startWith, Subject, withLatestFrom } from "rxjs"
+import { canvasSize$ } from "../intent/Map"
 import { EventButtonType } from "../type/event"
-import { PlaneAxis, PlaneRect, PlaneVector, SizedViewport, Viewport } from "../type/geometry"
+import { PlaneAxis, PlaneRect, PlaneVector } from '../type/plane'
+import { SizedViewport, Viewport } from "../type/viewport"
 import { mapInitPluck } from "../utils/collection"
 import { globalToRelativePosition, relativeToGlobalPosition } from "../utils/event"
-import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint, vectorTimes } from "../utils/geometry"
-import { distinctPlaneVector, filterWithLatestFrom } from "../utils/rx"
+import { divideRectByHalf, rectCenter, scaleToFitRectIn, scaleWithMovingPoint } from "../utils/geometry"
+import { vectorScale } from "../utils/math"
+import { distinctPlaneVector } from "../utils/plane"
+import { filterWithLatestFrom, mapMultiple } from "../utils/rx"
+import { viewportInverseTransformation, viewportTransformation } from "../utils/viewport"
 
 //#region Viewport and Size
-export const viewport$ = new BehaviorSubject<Viewport>({ position: [0, 0], scale: 1 })
-export const sizedViewport$ = new Subject<SizedViewport>()
+export const viewport$ = new Subject<Viewport>()
+export const sizedViewport$ = viewport$
+    .pipe(
+        combineLatestWith(canvasSize$),
+        map(([viewport, size]) => <SizedViewport>({ size, viewport }))
+    )
+export const viewportTransformation$ = viewport$
+    .pipe(
+        mapMultiple(viewportTransformation, viewportInverseTransformation),
+    )
 export const position$ = viewport$
     .pipe(
         map(({ position }) => position),
@@ -70,7 +83,7 @@ export function mapToFittedviewport(): OperatorFunction<PlaneRect, Viewport> {
     return ob => ob.pipe(
         withLatestFrom(sizedViewport$),
         map(([rect, { viewport, size }]) => {
-            const globalRect = [relativeToGlobalPosition(rect[0], viewport), vectorTimes(viewport.scale, rect[1])] as PlaneRect
+            const globalRect = [relativeToGlobalPosition(rect[0], viewport), vectorScale(viewport.scale, rect[1])] as PlaneRect
             const displayRect = divideRectByHalf([[0, 0], size], PlaneAxis.X)[1]
             const scale = scaleToFitRectIn(globalRect, displayRect[1])
             const transformation = scaleWithMovingPoint(scale, rectCenter(globalRect), rectCenter(displayRect))

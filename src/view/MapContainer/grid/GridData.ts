@@ -1,8 +1,17 @@
-import { PerAxis, PlaneAxis, PlaneRect, PlaneSize } from "../../../type/geometry"
-import { arrayInit as arrayInit, mapInit } from "../../../utils/collection"
+import { PerAxis, PlaneAxis, PlaneRect, PlaneSize } from "../../../type/plane"
+import { arrayInit, mapInit } from "../../../utils/collection"
+import { fromAxis, planeRectZeros } from "../../../utils/plane"
 import { numberBounded, nearestSmallerPowerOf2 } from "../../../utils/math"
-import { fromAxis } from "../../../utils/object"
 
+export const defaultGridOptions: GridOptions = {
+    desiredLineCount: 16,
+    minLineGap: 4,
+    maxLineGap: 1024,
+}
+
+export type GridData = GridData.Obj
+export type GridLineData = GridData.Line
+export type GridOptions = GridData.Options
 export module GridData {
     export type Line = Readonly<{
         axis: PlaneAxis
@@ -15,11 +24,11 @@ export module GridData {
         minLineGap: number
         maxLineGap: number
     }>
-    export type State = Readonly<{
+    type AxisMaps = PerAxis<LineMap>
+    type Derived = Readonly<AxisMaps & {
         gap: number
     }>
-    export type AxisMaps = Readonly<PerAxis<LineMap>>
-    export type Obj = Options & AxisMaps & State
+    export type Obj = Options & Derived
 
     function sizeToLineGap(
         { minLineGap, maxLineGap, desiredLineCount }: Options,
@@ -59,9 +68,9 @@ export module GridData {
         return mapInit(positions, p => initLine(axis, length, p))
     }
 
-    export function fromRect(
-        [[x, y], size]: PlaneRect,
-        options: Options,
+    export function init(
+        [[x, y], size]: PlaneRect = planeRectZeros(),
+        options = defaultGridOptions,
     ): Obj {
         const [width, height] = size
         const gap = sizeToLineGap(options, size)
